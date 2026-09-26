@@ -11,10 +11,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/estilo.css"/>
+    <script src="/evento.js"></script>
 </head>
 <body>
 <main>
-    <header class="topo"><span class="evento" id="evento">Amigo Secreto</span></header>
+    <header class="topo">
+        <span class="evento" id="evento">Amigo Secreto</span>
+        <span class="evento-sub oculto" id="evento-sub">🎁 Sorteio de amigo secreto</span>
+    </header>
     <h1 class="centro">Painel do organizador</h1>
 
     <!-- Login -->
@@ -31,10 +35,24 @@
         <div id="aviso-localhost" class="aviso oculto">
             ⚠️ Você abriu este painel pelo endereço local (<strong id="host-atual"></strong>).
             Os links gerados só funcionarão neste computador. Abra o painel pelo
-            <strong>endereço público</strong> para enviar os links à família.
+            <strong>endereço público</strong> para enviar os links aos participantes.
         </div>
 
         <div id="mensagem" class="aviso oculto" role="status"></div>
+
+        <!-- Nome da comemoração -->
+        <section class="cartao">
+            <h2>Nome da comemoração</h2>
+            <p class="suave">Aparece para todos os participantes. Exemplos: “Amigo Secreto da Família”,
+                “Amigo Secreto Time X”, “Amigo Chocolate”.</p>
+            <form id="form-evento" class="linha-form">
+                <input id="nome-evento" type="text" placeholder="Amigo Secreto" maxlength="40"
+                       autocomplete="off" aria-label="Nome da comemoração"/>
+                <button class="botao verde">Salvar</button>
+            </form>
+            <p class="suave" style="font-size:.8rem;margin:10px 0 0">Seja qual for o nome, as telas e a mensagem do
+                WhatsApp sempre deixam claro que é um <strong>amigo secreto</strong>.</p>
+        </section>
 
         <!-- Adicionar -->
         <section id="sec-adicionar" class="cartao">
@@ -77,8 +95,6 @@
     const $ = (id) => document.getElementById(id);
     const CHAVE = "amigo-secreto-senha";
     let senha = sessionStorage.getItem(CHAVE) || "";
-    let nomeEvento = "Amigo Secreto";
-
     async function api(caminho, opcoes = {}) {
         const resp = await fetch("/api/admin" + caminho, {
             ...opcoes,
@@ -106,8 +122,8 @@
     }
 
     function mensagemWhatsApp(nome, token) {
-        return `Oi, ${nome}! 🎁\n\nEste é o seu link do *${nomeEvento}*.\n` +
-            `Toque nele para descobrir quem você tirou (não mostre para ninguém! 🤫):\n\n${linkDe(token)}`;
+        return `Oi, ${nome}! 🎁\n\nEste é o seu link do *${Evento.descricao()}*.\n` +
+            `Toque nele para descobrir quem é o seu amigo secreto (não mostre para ninguém! 🤫):\n\n${linkDe(token)}`;
     }
 
     function botao(texto, classe, aoClicar) {
@@ -250,10 +266,21 @@
 
     $("btn-sair").addEventListener("click", () => sair());
 
-    fetch("/api/evento").then((r) => r.json()).then((e) => {
-        nomeEvento = e.nome;
-        $("evento").textContent = e.nome;
-    }).catch(() => {});
+    $("form-evento").addEventListener("submit", (ev) => {
+        ev.preventDefault();
+        executar(async () => {
+            await api("/evento", {method: "PUT", body: JSON.stringify({nome: $("nome-evento").value})});
+            $("nome-evento").value = await carregarEvento();
+        }, "Nome da comemoração salvo!");
+    });
+
+    async function carregarEvento() {
+        const nome = await Evento.carregar();
+        document.title = "Organizador · " + nome;
+        return nome;
+    }
+
+    carregarEvento().then((nome) => $("nome-evento").value = nome);
 
     if (senha) {
         carregar().then(entrarNoPainel).catch(() => {});

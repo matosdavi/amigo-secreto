@@ -1,20 +1,22 @@
-# 🎁 Amigo Secreto da Família
+# 🎁 Amigo Secreto
 
-Aplicação web para organizar o amigo secreto da família **sem papelzinho e sem precisar estar todo mundo no mesmo lugar**.
+Aplicação web para organizar amigo secreto (na família, no trabalho, entre amigos) **sem papelzinho e sem precisar estar todo mundo no mesmo lugar**.
 Cada pessoa recebe pelo WhatsApp um **link só dela**, abre no celular, toca no presente e descobre quem tirou. 🎉
 
 - 👵 **Pensado para todas as idades:** sem cadastro, sem senha, sem aplicativo. Só tocar no link.
 - 🔒 **Secreto de verdade:** cada link tem um código aleatório impossível de adivinhar, e **nem o organizador vê quem tirou quem**.
 - 🎲 **Sorteio justo:** ninguém tira a si mesmo e o sorteio forma um ciclo único com todos os participantes.
 - 📱 **Feito para celular:** letras grandes, botões grandes e uma animação de “abrir o presente”.
+- 🏷️ **Nome personalizável:** o organizador escolhe o nome da comemoração (“Amigo Secreto da Família”, “Amigo Secreto Time X”, “Amigo Chocolate”…), e as telas sempre deixam claro que é um amigo secreto.
 
 ## Como funciona
 
 ```
-Organizador                                 Cada familiar
-───────────                                 ─────────────
+Organizador                                 Cada participante
+───────────                                 ─────────────────
 1. Abre /organizador (com senha)
-2. Adiciona os nomes
+2. Escolhe o nome da comemoração
+   e adiciona os participantes
 3. Clica em “Sortear agora”
 4. Toca em “WhatsApp” ao lado de  ───────►  5. Recebe a mensagem com o link
    cada nome e envia o link                 6. Abre, toca no presente 🎁
@@ -76,7 +78,6 @@ cp .env.example .env
 |---|---|---|
 | `APP_ENV` | `development` ou `production` (em produção, `DATABASE_URL` e `ADMIN_SENHA` são obrigatórios) | `development` |
 | `ADMIN_SENHA` | Senha do painel do organizador | gerada e mostrada no console (só em desenvolvimento) |
-| `NOME_EVENTO` | Nome exibido nas telas (ex.: `Amigo Pijama`) | `Amigo Secreto` |
 | `PORT` | Porta HTTP | `8080` |
 | `DATABASE_URL` | Connection string do PostgreSQL (`postgres://usuario:senha@host/banco?sslmode=...`) | vazio = H2 em `./data` |
 
@@ -94,7 +95,7 @@ E no `.env`:
 DATABASE_URL=postgres://postgres:postgres@localhost:5433/amigo_secreto?sslmode=disable
 ```
 
-## Disponibilizando para a família (grátis) 🌍
+## Disponibilizando para os participantes (grátis) 🌍
 
 Os links precisam de um **endereço público** para funcionar no celular de quem está em outra casa.
 
@@ -112,14 +113,13 @@ Variáveis de ambiente no Render (o `Dockerfile` já define `APP_ENV=production`
 ```
 DATABASE_URL = postgresql://usuario:senha@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
 ADMIN_SENHA  = uma-senha-forte (mínimo 8 caracteres)
-NOME_EVENTO  = Amigo Secreto da Família
 ```
 
 Em produção a aplicação **se recusa a subir** se faltar `DATABASE_URL` ou `ADMIN_SENHA`, e a mensagem de erro aparece nos logs do Render. Isso evita dois problemas silenciosos: usar o H2 (o disco do plano grátis é apagado a cada reinício) e uma senha temporária que mudaria a cada vez que o servidor acorda.
 
 Depois do deploy, acesse `https://<seu-app>.onrender.com/organizador` e envie os links **a partir desse endereço**.
 
-**⚠️ Servidor dormindo:** no plano grátis do Render, a aplicação "dorme" depois de 15 minutos sem acesso, e o primeiro acesso leva cerca de 1 minuto para acordá-la. Antes de mandar os links, abra o painel você mesmo, e avise a família: *"se demorar um pouquinho para abrir, é normal"*.
+**⚠️ Servidor dormindo:** no plano grátis do Render, a aplicação "dorme" depois de 15 minutos sem acesso, e o primeiro acesso leva cerca de 1 minuto para acordá-la. Antes de mandar os links, abra o painel você mesmo, e avise os participantes: *"se demorar um pouquinho para abrir, é normal"*.
 
 **Não use um monitor para manter o servidor sempre acordado.** O Neon também dorme quando ninguém usa, e manter os dois ligados 24 horas por dia estouraria as horas de computação do plano grátis. Cada acesso só gasta enquanto alguém está usando (o pool de conexões solta as conexões ociosas depois de 1 minuto).
 
@@ -186,6 +186,7 @@ src/main/resources/static
 | `POST` | `/api/admin/participantes` | Adiciona participante `{"nome": "..."}` (🔒) |
 | `DELETE` | `/api/admin/participantes/{id}` | Remove participante (🔒) |
 | `POST` | `/api/admin/participantes/{id}/novo-link` | Gera um novo link (🔒) |
+| `PUT` | `/api/admin/evento` | Altera o nome da comemoração `{"nome": "..."}` (🔒) |
 | `POST` | `/api/admin/sorteio` | Realiza o sorteio (🔒) |
 | `DELETE` | `/api/admin/sorteio` | Desfaz o sorteio (🔒) |
 

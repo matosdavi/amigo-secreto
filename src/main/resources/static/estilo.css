@@ -53,6 +53,14 @@ header.topo .evento {
     border-radius: 999px;
 }
 
+header.topo .evento-sub {
+    display: block;
+    margin-top: 6px;
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--texto-suave);
+}
+
 h1 { font-size: 1.8rem; line-height: 1.2; margin: 16px 0 8px; }
 h2 { font-size: 1.25rem; margin: 0 0 12px; }
 

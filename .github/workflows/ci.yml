@@ -63,6 +63,11 @@ jobs:
           done
           curl -fs -X POST -H "$H" localhost:8080/api/admin/sorteio
 
+          # nome da comemoração personalizado pelo organizador
+          curl -fs -X PUT -H "$H" -H 'Content-Type: application/json' \
+            -d '{"nome":"Amigo Chocolate"}' localhost:8080/api/admin/evento
+          curl -fs localhost:8080/api/evento | jq -e '.nome == "Amigo Chocolate"'
+
           TOKEN=$(curl -fs -H "$H" localhost:8080/api/admin | jq -r '.participantes[0].token')
           curl -fs -X POST "localhost:8080/api/participante/$TOKEN/revelar" | jq -e '.amigo != .nome'
           curl -fs -H "$H" localhost:8080/api/admin | jq -e '[.participantes[] | select(.visualizou)] | length == 1'

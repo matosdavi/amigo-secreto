@@ -3,8 +3,8 @@ package com.natal.amigo_secreto.controller;
 import com.natal.amigo_secreto.dto.Dtos.Boasvindas;
 import com.natal.amigo_secreto.dto.Dtos.Evento;
 import com.natal.amigo_secreto.dto.Dtos.Revelacao;
+import com.natal.amigo_secreto.service.ComemoracaoService;
 import com.natal.amigo_secreto.service.SorteioService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 /** Rotas públicas usadas pelo link individual de cada participante. */
@@ -13,16 +13,16 @@ import org.springframework.web.bind.annotation.*;
 public class SorteioController {
 
     private final SorteioService service;
-    private final String nomeEvento;
+    private final ComemoracaoService comemoracao;
 
-    public SorteioController(SorteioService service, @Value("${app.nome-evento:Amigo Secreto}") String nomeEvento) {
+    public SorteioController(SorteioService service, ComemoracaoService comemoracao) {
         this.service = service;
-        this.nomeEvento = nomeEvento;
+        this.comemoracao = comemoracao;
     }
 
     @GetMapping("/evento")
     public Evento evento() {
-        return new Evento(nomeEvento);
+        return new Evento(comemoracao.nome());
     }
 
     @GetMapping("/participante/{token}")

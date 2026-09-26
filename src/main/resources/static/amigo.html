@@ -11,10 +11,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/estilo.css"/>
+    <script src="/evento.js"></script>
 </head>
 <body>
 <main>
-    <header class="topo"><span class="evento" id="evento">Amigo Secreto</span></header>
+    <header class="topo">
+        <span class="evento" id="evento">Amigo Secreto</span>
+        <span class="evento-sub oculto" id="evento-sub">🎁 Sorteio de amigo secreto</span>
+    </header>
 
     <div id="carregando" class="carregando" aria-label="Carregando"></div>
 
@@ -27,7 +31,7 @@
     <!-- Sorteio ainda não realizado -->
     <section id="tela-espera" class="cartao centro oculto">
         <h1>Olá, <span class="js-nome"></span>! 👋</h1>
-        <p>O sorteio <strong>ainda não foi feito</strong>.</p>
+        <p>O sorteio do amigo secreto <strong>ainda não foi feito</strong>.</p>
         <p class="suave">Guarde esta mensagem e abra o link de novo mais tarde.</p>
         <button class="botao verde" onclick="location.reload()">🔄 Ver de novo</button>
     </section>
@@ -35,8 +39,8 @@
     <!-- Presente fechado / aberto -->
     <section id="tela-presente" class="oculto">
         <div class="centro">
-            <h1>Olá, <span class="js-nome"></span>! 🎄</h1>
-            <p id="instrucao">Toque no presente para descobrir quem você tirou.</p>
+            <h1>Olá, <span class="js-nome"></span>! 🎉</h1>
+            <p id="instrucao">Toque no presente para descobrir quem é o seu amigo secreto.</p>
         </div>
 
         <div class="palco">
@@ -48,7 +52,7 @@
         <p id="dica" class="dica-toque">👆 Toque no presente</p>
 
         <div id="revelacao" class="cartao revelacao oculto" aria-live="polite">
-            <p class="rotulo">Você tirou:</p>
+            <p class="rotulo">Seu amigo secreto é:</p>
             <p id="nome-amigo" class="nome-amigo"></p>
             <div class="aviso">🤫 É segredo! Não mostre para ninguém.</div>
             <button id="btn-esconder" class="botao claro">🙈 Esconder o nome</button>
@@ -77,10 +81,7 @@
     }
 
     async function iniciar() {
-        api("/api/evento").then((e) => {
-            $("evento").textContent = e.nome;
-            document.title = e.nome + " 🎁";
-        }).catch(() => {});
+        Evento.carregar();
 
         try {
             const p = await api("/api/participante/" + encodeURIComponent(token));
