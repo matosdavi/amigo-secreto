@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="theme-color" content="#b3261e"/>
+    <title>Amigo Secreto 🎁</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/estilo.css"/>
+</head>
+<body>
+<main>
+    <header class="topo"><span class="evento" id="evento">Amigo Secreto</span></header>
+
+    <section class="cartao centro">
+        <h1>🎁 Bem-vindo!</h1>
+        <p>Cada pessoa da família recebe um <strong>link só seu</strong> pelo WhatsApp.</p>
+        <p class="suave">Abra a mensagem que você recebeu e toque no link para descobrir quem você tirou.</p>
+        <div class="aviso">Não recebeu o link? Peça para quem está organizando o sorteio.</div>
+    </section>
+
+    <a class="link-sutil" href="/organizador">Sou o organizador</a>
+</main>
+<script>
+    fetch("/api/evento").then((r) => r.json()).then((e) => {
+        document.getElementById("evento").textContent = e.nome;
+        document.title = e.nome + " 🎁";
+    }).catch(() => {});
+</script>
+</body>
+</html>

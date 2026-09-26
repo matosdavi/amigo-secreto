@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="referrer" content="no-referrer"/>
+    <meta name="robots" content="noindex"/>
+    <meta name="theme-color" content="#b3261e"/>
+    <title>Seu Amigo Secreto 🎁</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/estilo.css"/>
+</head>
+<body>
+<main>
+    <header class="topo"><span class="evento" id="evento">Amigo Secreto</span></header>
+
+    <div id="carregando" class="carregando" aria-label="Carregando"></div>
+
+    <!-- Link inválido -->
+    <section id="tela-erro" class="cartao centro oculto">
+        <h1>😕 Ops!</h1>
+        <p id="erro-texto" class="suave"></p>
+    </section>
+
+    <!-- Sorteio ainda não realizado -->
+    <section id="tela-espera" class="cartao centro oculto">
+        <h1>Olá, <span class="js-nome"></span>! 👋</h1>
+        <p>O sorteio <strong>ainda não foi feito</strong>.</p>
+        <p class="suave">Guarde esta mensagem e abra o link de novo mais tarde.</p>
+        <button class="botao verde" onclick="location.reload()">🔄 Ver de novo</button>
+    </section>
+
+    <!-- Presente fechado / aberto -->
+    <section id="tela-presente" class="oculto">
+        <div class="centro">
+            <h1>Olá, <span class="js-nome"></span>! 🎄</h1>
+            <p id="instrucao">Toque no presente para descobrir quem você tirou.</p>
+        </div>
+
+        <div class="palco">
+            <button id="presente" class="presente" aria-label="Abrir o presente">
+                <span class="caixa"></span>
+                <span class="tampa"><span class="laco"></span></span>
+            </button>
+        </div>
+        <p id="dica" class="dica-toque">👆 Toque no presente</p>
+
+        <div id="revelacao" class="cartao revelacao oculto" aria-live="polite">
+            <p class="rotulo">Você tirou:</p>
+            <p id="nome-amigo" class="nome-amigo"></p>
+            <div class="aviso">🤫 É segredo! Não mostre para ninguém.</div>
+            <button id="btn-esconder" class="botao claro">🙈 Esconder o nome</button>
+        </div>
+
+        <div id="erro-revelar" class="aviso erro oculto"></div>
+    </section>
+
+    <a class="link-sutil" href="/">Precisa de ajuda? Fale com quem organizou o sorteio.</a>
+</main>
+
+<script>
+    const token = decodeURIComponent(location.pathname.split("/").filter(Boolean).pop() || "");
+    const $ = (id) => document.getElementById(id);
+
+    function mostrar(id) {
+        $("carregando").classList.add("oculto");
+        $(id).classList.remove("oculto");
+    }
+
+    async function api(caminho, opcoes) {
+        const resp = await fetch(caminho, opcoes);
+        const dados = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(dados.mensagem || "Não foi possível carregar. Tente de novo.");
+        return dados;
+    }
+
+    async function iniciar() {
+        api("/api/evento").then((e) => {
+            $("evento").textContent = e.nome;
+            document.title = e.nome + " 🎁";
+        }).catch(() => {});
+
+        try {
+            const p = await api("/api/participante/" + encodeURIComponent(token));
+            document.querySelectorAll(".js-nome").forEach((el) => el.textContent = p.nome);
+            mostrar(p.sorteioRealizado ? "tela-presente" : "tela-espera");
+        } catch (e) {
+            $("erro-texto").textContent = e.message;
+            mostrar("tela-erro");
+        }
+    }
+
+    let abrindo = false;
+    async function abrirPresente() {
+        if (abrindo) return;
+        abrindo = true;
+        $("erro-revelar").classList.add("oculto");
+        try {
+            const r = await api("/api/participante/" + encodeURIComponent(token) + "/revelar", {method: "POST"});
+            $("nome-amigo").textContent = r.amigo;
+            $("presente").classList.add("aberto");
+            $("presente").setAttribute("aria-label", "Presente aberto");
+            $("dica").classList.add("oculto");
+            $("instrucao").textContent = "🎉 Surpresa!";
+            setTimeout(() => {
+                $("revelacao").classList.remove("oculto");
+                $("revelacao").scrollIntoView({behavior: "smooth", block: "center"});
+                soltarConfete();
+            }, 450);
+        } catch (e) {
+            $("erro-revelar").textContent = e.message;
+            $("erro-revelar").classList.remove("oculto");
+            abrindo = false;
+        }
+    }
+
+    function alternarNome() {
+        const nome = $("nome-amigo");
+        const escondido = nome.classList.toggle("escondido");
+        $("btn-esconder").textContent = escondido ? "👀 Mostrar o nome" : "🙈 Esconder o nome";
+    }
+
+    function soltarConfete() {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+        const cores = ["#b3261e", "#1d6b4f", "#e0a526", "#ffffff", "#e8736b"];
+        for (let i = 0; i < 90; i++) {
+            const c = document.createElement("span");
+            c.className = "confete";
+            c.style.left = Math.random() * 100 + "vw";
+            c.style.background = cores[i % cores.length];
+            c.style.setProperty("--dx", (Math.random() * 200 - 100) + "px");
+            c.style.setProperty("--giro", (Math.random() * 1080) + "deg");
+            c.style.animationDuration = (2.2 + Math.random() * 2) + "s";
+            c.style.animationDelay = (Math.random() * .6) + "s";
+            document.body.appendChild(c);
+            c.addEventListener("animationend", () => c.remove());
+        }
+    }
+
+    $("presente").addEventListener("click", abrirPresente);
+    $("btn-esconder").addEventListener("click", alternarNome);
+    iniciar();
+</script>
+</body>
+</html>

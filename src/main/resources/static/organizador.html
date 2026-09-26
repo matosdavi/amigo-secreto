@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <meta name="referrer" content="no-referrer"/>
+    <meta name="robots" content="noindex"/>
+    <meta name="theme-color" content="#1d6b4f"/>
+    <title>Organizador · Amigo Secreto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/estilo.css"/>
+</head>
+<body>
+<main>
+    <header class="topo"><span class="evento" id="evento">Amigo Secreto</span></header>
+    <h1 class="centro">Painel do organizador</h1>
+
+    <!-- Login -->
+    <section id="tela-login" class="cartao oculto">
+        <form id="form-login">
+            <label for="senha">Senha do organizador</label>
+            <input id="senha" type="password" autocomplete="current-password" required/>
+            <div id="erro-login" class="aviso erro oculto"></div>
+            <button class="botao verde" style="margin-top:16px">Entrar</button>
+        </form>
+    </section>
+
+    <div id="painel" class="oculto">
+        <div id="aviso-localhost" class="aviso oculto">
+            ⚠️ Você abriu este painel pelo endereço local (<strong id="host-atual"></strong>).
+            Os links gerados só funcionarão neste computador. Abra o painel pelo
+            <strong>endereço público</strong> para enviar os links à família.
+        </div>
+
+        <div id="mensagem" class="aviso oculto" role="status"></div>
+
+        <!-- Adicionar -->
+        <section id="sec-adicionar" class="cartao">
+            <h2>1. Quem vai participar?</h2>
+            <form id="form-adicionar" class="linha-form">
+                <input id="novo-nome" type="text" placeholder="Nome (ex.: Vó Maria)" maxlength="60"
+                       autocomplete="off" aria-label="Nome do participante" required/>
+                <button class="botao verde">Adicionar</button>
+            </form>
+        </section>
+
+        <!-- Lista -->
+        <section class="cartao">
+            <h2 id="titulo-lista">Participantes</h2>
+            <p id="lista-vazia" class="suave">Ninguém adicionado ainda.</p>
+            <ul id="lista" class="lista"></ul>
+        </section>
+
+        <!-- Sorteio -->
+        <section class="cartao">
+            <div id="bloco-sortear">
+                <h2>2. Fazer o sorteio</h2>
+                <p class="suave">O sistema sorteia todos de uma vez. Ninguém tira a si mesmo e
+                    <strong>nem você (organizador) fica sabendo quem tirou quem</strong>.</p>
+                <button id="btn-sortear" class="botao">🎲 Sortear agora</button>
+            </div>
+            <div id="bloco-sorteado" class="oculto">
+                <h2>✅ Sorteio feito!</h2>
+                <p>Agora envie para cada pessoa o <strong>link dela</strong> (botão “WhatsApp” na lista acima).
+                    Quem já abriu aparece com “já viu”.</p>
+                <button id="btn-desfazer" class="botao claro">↩️ Desfazer sorteio</button>
+            </div>
+        </section>
+
+        <button id="btn-sair" class="botao claro pequeno" style="margin:0 auto">Sair</button>
+    </div>
+</main>
+
+<script>
+    const $ = (id) => document.getElementById(id);
+    const CHAVE = "amigo-secreto-senha";
+    let senha = sessionStorage.getItem(CHAVE) || "";
+    let nomeEvento = "Amigo Secreto";
+
+    async function api(caminho, opcoes = {}) {
+        const resp = await fetch("/api/admin" + caminho, {
+            ...opcoes,
+            headers: {"Content-Type": "application/json", "X-Senha-Admin": senha},
+        });
+        if (resp.status === 401) {
+            sair("Senha incorreta.");
+            throw new Error("Senha incorreta.");
+        }
+        const dados = resp.status === 204 ? null : await resp.json().catch(() => null);
+        if (!resp.ok) throw new Error((dados && dados.mensagem) || "Algo deu errado. Tente de novo.");
+        return dados;
+    }
+
+    function avisar(texto, tipo = "ok") {
+        const m = $("mensagem");
+        m.textContent = texto;
+        m.className = "aviso " + tipo;
+        clearTimeout(avisar.t);
+        avisar.t = setTimeout(() => m.classList.add("oculto"), 5000);
+    }
+
+    function linkDe(token) {
+        return location.origin + "/a/" + encodeURIComponent(token);
+    }
+
+    function mensagemWhatsApp(nome, token) {
+        return `Oi, ${nome}! 🎁\n\nEste é o seu link do *${nomeEvento}*.\n` +
+            `Toque nele para descobrir quem você tirou (não mostre para ninguém! 🤫):\n\n${linkDe(token)}`;
+    }
+
+    function botao(texto, classe, aoClicar) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "botao pequeno " + classe;
+        b.textContent = texto;
+        b.addEventListener("click", aoClicar);
+        return b;
+    }
+
+    function desenhar(painel) {
+        const {sorteioRealizado, participantes} = painel;
+        $("sec-adicionar").classList.toggle("oculto", sorteioRealizado);
+        $("bloco-sortear").classList.toggle("oculto", sorteioRealizado);
+        $("bloco-sorteado").classList.toggle("oculto", !sorteioRealizado);
+        $("lista-vazia").classList.toggle("oculto", participantes.length > 0);
+
+        const viram = participantes.filter((p) => p.visualizou).length;
+        $("titulo-lista").textContent = sorteioRealizado
+            ? `Participantes (${viram} de ${participantes.length} já viram)`
+            : `Participantes (${participantes.length})`;
+
+        const lista = $("lista");
+        lista.replaceChildren();
+        for (const p of participantes) {
+            const li = document.createElement("li");
+            const cabeca = document.createElement("div");
+            cabeca.className = "cabeca";
+            const nome = document.createElement("span");
+            nome.className = "nome";
+            nome.textContent = p.nome;
+            cabeca.append(nome);
+            if (sorteioRealizado) {
+                const selo = document.createElement("span");
+                selo.className = "selo" + (p.visualizou ? " ok" : "");
+                selo.textContent = p.visualizou ? "✅ já viu" : "⏳ ainda não viu";
+                cabeca.append(selo);
+            }
+
+            const acoes = document.createElement("div");
+            acoes.className = "acoes";
+            acoes.append(
+                botao("💬 WhatsApp", "verde", () =>
+                    window.open("https://wa.me/?text=" + encodeURIComponent(mensagemWhatsApp(p.nome, p.token)), "_blank")),
+                botao("📋 Copiar link", "claro", () => copiar(p.nome, p.token)),
+                botao("🔁 Novo link", "claro", () => novoLink(p)),
+            );
+            if (!sorteioRealizado) acoes.append(botao("🗑️ Remover", "claro", () => remover(p)));
+
+            li.append(cabeca, acoes);
+            lista.append(li);
+        }
+    }
+
+    async function carregar() {
+        desenhar(await api(""));
+    }
+
+    async function executar(acao, sucesso) {
+        try {
+            await acao();
+            if (sucesso) avisar(sucesso);
+            await carregar();
+        } catch (e) {
+            if (senha) avisar(e.message, "erro");
+        }
+    }
+
+    async function copiar(nome, token) {
+        try {
+            await navigator.clipboard.writeText(mensagemWhatsApp(nome, token));
+            avisar(`Mensagem com o link de ${nome} copiada!`);
+        } catch {
+            prompt("Copie o link abaixo:", linkDe(token));
+        }
+    }
+
+    function novoLink(p) {
+        if (!confirm(`Gerar um novo link para ${p.nome}? O link antigo para de funcionar.`)) return;
+        executar(() => api(`/participantes/${p.id}/novo-link`, {method: "POST"}),
+            `Novo link gerado para ${p.nome}. Envie de novo para essa pessoa.`);
+    }
+
+    function remover(p) {
+        if (!confirm(`Remover ${p.nome}?`)) return;
+        executar(() => api(`/participantes/${p.id}`, {method: "DELETE"}), `${p.nome} removido(a).`);
+    }
+
+    function entrarNoPainel() {
+        $("tela-login").classList.add("oculto");
+        $("painel").classList.remove("oculto");
+        const local = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname)
+            || /^(192\.168|10\.|172\.(1[6-9]|2\d|3[01]))\./.test(location.hostname);
+        $("host-atual").textContent = location.host;
+        $("aviso-localhost").classList.toggle("oculto", !local);
+    }
+
+    function sair(erro) {
+        senha = "";
+        sessionStorage.removeItem(CHAVE);
+        $("painel").classList.add("oculto");
+        $("tela-login").classList.remove("oculto");
+        $("erro-login").textContent = erro || "";
+        $("erro-login").classList.toggle("oculto", !erro);
+        $("senha").value = "";
+        $("senha").focus();
+    }
+
+    $("form-login").addEventListener("submit", async (ev) => {
+        ev.preventDefault();
+        senha = $("senha").value;
+        try {
+            await carregar();
+            sessionStorage.setItem(CHAVE, senha);
+            entrarNoPainel();
+        } catch { /* sair() já mostrou o erro */ }
+    });
+
+    $("form-adicionar").addEventListener("submit", (ev) => {
+        ev.preventDefault();
+        const nome = $("novo-nome").value.trim();
+        if (!nome) return;
+        executar(async () => {
+            await api("/participantes", {method: "POST", body: JSON.stringify({nome})});
+            $("novo-nome").value = "";
+            $("novo-nome").focus();
+        }, `${nome} adicionado(a)!`);
+    });
+
+    $("btn-sortear").addEventListener("click", () => {
+        if (!confirm("Fazer o sorteio agora? Depois disso a lista de participantes fica travada.")) return;
+        executar(() => api("/sorteio", {method: "POST"}), "🎉 Sorteio realizado! Agora envie os links.");
+    });
+
+    $("btn-desfazer").addEventListener("click", () => {
+        if (!confirm("Desfazer o sorteio? Todos perdem quem tiraram e será preciso sortear de novo.")) return;
+        executar(() => api("/sorteio", {method: "DELETE"}), "Sorteio desfeito.");
+    });
+
+    $("btn-sair").addEventListener("click", () => sair());
+
+    fetch("/api/evento").then((r) => r.json()).then((e) => {
+        nomeEvento = e.nome;
+        $("evento").textContent = e.nome;
+    }).catch(() => {});
+
+    if (senha) {
+        carregar().then(entrarNoPainel).catch(() => {});
+    } else {
+        sair();
+    }
+</script>
+</body>
+</html>
