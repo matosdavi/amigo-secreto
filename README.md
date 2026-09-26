@@ -29,7 +29,7 @@ Organizador                                 Cada familiar
 | Java | 17 ou superior (testado com 21) |
 | Spring Boot | 4.0 (Web MVC + Data JPA) |
 | Maven | via Maven Wrapper (`mvnw`), não precisa instalar |
-| Banco de dados | H2 em arquivo (padrão, zero instalação) ou PostgreSQL |
+| Banco de dados | H2 em arquivo (padrão, zero instalação) ou PostgreSQL (produção: Neon) |
 | Frontend | HTML, CSS e JavaScript puros (sem framework) |
 
 ## Executando localmente
@@ -64,29 +64,68 @@ Os dados ficam salvos na pasta `data/` (banco H2 em arquivo).
 java -jar target/amigo-secreto-0.0.1-SNAPSHOT.jar
 ```
 
-### Configuração (variáveis de ambiente)
+### Configuração (`.env`)
+
+As configurações vêm de variáveis de ambiente ou de um arquivo `.env` na pasta do projeto:
+
+```bash
+cp .env.example .env
+```
 
 | Variável | Para que serve | Padrão |
 |---|---|---|
-| `ADMIN_SENHA` | Senha do painel do organizador | gerada e mostrada no console |
+| `APP_ENV` | `development` ou `production` (em produção, `DATABASE_URL` e `ADMIN_SENHA` são obrigatórios) | `development` |
+| `ADMIN_SENHA` | Senha do painel do organizador | gerada e mostrada no console (só em desenvolvimento) |
 | `NOME_EVENTO` | Nome exibido nas telas (ex.: `Amigo Pijama`) | `Amigo Secreto` |
 | `PORT` | Porta HTTP | `8080` |
-| `DB_URL` | URL JDBC do banco | `jdbc:h2:file:./data/amigosecreto` |
-| `DB_USER` / `DB_PASSWORD` | Usuário e senha do banco | `sa` / vazio |
+| `DATABASE_URL` | Connection string do PostgreSQL (`postgres://usuario:senha@host/banco?sslmode=...`) | vazio = H2 em `./data` |
 
-Exemplo (PowerShell):
+### PostgreSQL local (opcional)
 
-```powershell
-$env:ADMIN_SENHA="minha-senha-forte"; $env:NOME_EVENTO="Amigo Pijama"; .\mvnw.cmd spring-boot:run
+Para rodar com o mesmo banco da produção, suba o PostgreSQL do `docker-compose.yml` (porta **5433**, para não conflitar com um PostgreSQL instalado no Windows):
+
+```bash
+docker compose up -d
+```
+
+E no `.env`:
+
+```
+DATABASE_URL=postgres://postgres:postgres@localhost:5433/amigo_secreto?sslmode=disable
 ```
 
 ## Disponibilizando para a família (grátis) 🌍
 
-Os links precisam de um **endereço público** para funcionar no celular de quem está em outra casa. Há duas opções gratuitas:
+Os links precisam de um **endereço público** para funcionar no celular de quem está em outra casa.
 
-### Opção A — Direto do seu computador com Cloudflare Tunnel (mais rápido)
+### Produção: Render + Neon (link fixo, recomendado)
 
-Ideal para testar ou para quando todos vão abrir o link no mesmo dia. Não precisa de conta.
+O link continua funcionando mesmo com o seu computador desligado.
+
+| Peça | Serviço (plano grátis) | O que configurar |
+|---|---|---|
+| Banco | [Neon](https://neon.com) (Postgres, região **AWS US East 2 – Ohio**) | copie a connection string para `DATABASE_URL` (ela já vem com `sslmode=require`) |
+| Aplicação | [Render](https://render.com) → **Web Service** a partir do `Dockerfile`, região **Ohio** (perto do banco) | as variáveis abaixo e o health check em `/health` |
+
+Variáveis de ambiente no Render (o `Dockerfile` já define `APP_ENV=production` e `PORT`):
+
+```
+DATABASE_URL = postgresql://usuario:senha@ep-xxxx.us-east-2.aws.neon.tech/neondb?sslmode=require
+ADMIN_SENHA  = uma-senha-forte (mínimo 8 caracteres)
+NOME_EVENTO  = Amigo Secreto da Família
+```
+
+Em produção a aplicação **se recusa a subir** se faltar `DATABASE_URL` ou `ADMIN_SENHA`, e a mensagem de erro aparece nos logs do Render. Isso evita dois problemas silenciosos: usar o H2 (o disco do plano grátis é apagado a cada reinício) e uma senha temporária que mudaria a cada vez que o servidor acorda.
+
+Depois do deploy, acesse `https://<seu-app>.onrender.com/organizador` e envie os links **a partir desse endereço**.
+
+**⚠️ Servidor dormindo:** no plano grátis do Render, a aplicação "dorme" depois de 15 minutos sem acesso, e o primeiro acesso leva cerca de 1 minuto para acordá-la. Antes de mandar os links, abra o painel você mesmo, e avise a família: *"se demorar um pouquinho para abrir, é normal"*.
+
+**Não use um monitor para manter o servidor sempre acordado.** O Neon também dorme quando ninguém usa, e manter os dois ligados 24 horas por dia estouraria as horas de computação do plano grátis. Cada acesso só gasta enquanto alguém está usando (o pool de conexões solta as conexões ociosas depois de 1 minuto).
+
+### Teste rápido: direto do seu computador com Cloudflare Tunnel
+
+Serve para mostrar para alguém ou testar no celular, sem conta e sem deploy.
 
 1. Instale o `cloudflared` (uma vez só):
    ```powershell
@@ -97,31 +136,17 @@ Ideal para testar ou para quando todos vão abrir o link no mesmo dia. Não prec
    ```bash
    cloudflared tunnel --url http://localhost:8080
    ```
-4. Ele mostra um endereço como `https://palavras-aleatorias.trycloudflare.com`.
-   Abra **esse endereço + `/organizador`** e envie os links a partir dali.
+4. Ele mostra um endereço como `https://palavras-aleatorias.trycloudflare.com`. Abra **esse endereço + `/organizador`**.
 
-> ⚠️ O computador precisa ficar **ligado** com a aplicação e o túnel rodando. Se o túnel for reiniciado, o endereço muda e os links precisam ser reenviados.
+> ⚠️ O computador precisa ficar ligado, e se o túnel for reiniciado o endereço muda (os links antigos param de funcionar).
 
-### Opção B — Hospedado na nuvem com Render + Neon (link fixo, recomendado para o evento)
+## CI
 
-O link continua funcionando mesmo com o seu computador desligado.
+O GitHub Actions (`.github/workflows/ci.yml`) roda a cada push:
 
-1. **Banco de dados (Neon, gratuito):** crie uma conta em [neon.tech](https://neon.tech), crie um projeto e copie os dados de conexão.
-2. **Aplicação (Render, gratuito):** em [render.com](https://render.com), crie um **Web Service** apontando para este repositório.
-   O Render detecta o `Dockerfile` automaticamente. Escolha o plano **Free**.
-3. Em **Environment**, configure:
-   ```
-   ADMIN_SENHA = uma-senha-forte
-   NOME_EVENTO = Amigo Secreto da Família
-   DB_URL      = jdbc:postgresql://<host-do-neon>/<banco>?sslmode=require
-   DB_USER     = <usuario-do-neon>
-   DB_PASSWORD = <senha-do-neon>
-   ```
-4. Após o deploy, acesse `https://<seu-app>.onrender.com/organizador`.
-
-> ℹ️ No plano gratuito do Render a aplicação “dorme” após ~15 minutos sem uso; o primeiro acesso depois disso pode levar cerca de 1 minuto. Vale avisar a família: *“se demorar um pouquinho para abrir, é normal”*.
->
-> ⚠️ Não use o banco H2 no Render: o disco do plano gratuito é apagado a cada reinício. Por isso o Neon (PostgreSQL).
+- **Build e testes:** `./mvnw verify`, incluindo o teste que confere o ciclo do sorteio 50 vezes.
+- **Ponta a ponta:** sobe o `.jar` em modo produção contra um PostgreSQL real e faz o fluxo completo (cadastrar, sortear, revelar, senha errada, link inválido).
+- **Imagem Docker:** garante que o `Dockerfile` continua compilando.
 
 ## Segurança e privacidade
 
@@ -135,8 +160,8 @@ O link continua funcionando mesmo com o seu computador desligado.
 ```
 src/main/java/com/natal/amigo_secreto
 ├── AmigoSecretoApplication.java   # ponto de entrada
-├── config/        # senha do organizador (interceptor) e rotas das páginas
-├── controller/    # API REST: participante (público) e admin (com senha)
+├── config/        # variáveis de ambiente, senha do organizador e rotas das páginas
+├── controller/    # API REST: participante (público), admin (com senha) e /health
 ├── dto/           # records de entrada/saída da API
 ├── exception/     # erros de negócio → respostas JSON amigáveis
 ├── model/         # entidade Participante
@@ -153,6 +178,7 @@ src/main/resources/static
 
 | Método | Rota | Descrição |
 |---|---|---|
+| `GET` | `/health` | Aplicação e banco respondendo (health check do Render) |
 | `GET` | `/api/evento` | Nome do evento |
 | `GET` | `/api/participante/{token}` | Nome do participante e se o sorteio já foi feito |
 | `POST` | `/api/participante/{token}/revelar` | Revela quem o participante tirou |

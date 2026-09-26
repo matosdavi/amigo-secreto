@@ -1,0 +1,24 @@
+# PostgreSQL local para desenvolvimento (opcional: sem ele, o app usa H2).
+# Suba com:  docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: amigo-secreto-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: amigo_secreto
+    ports:
+      # Porta 5433 no host: evita conflito com um PostgreSQL instalado no Windows (5432)
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data # os dados sobrevivem a "docker compose down"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d amigo_secreto"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:

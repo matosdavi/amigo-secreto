@@ -1,0 +1,2 @@
+org.springframework.boot.EnvironmentPostProcessor=\
+com.natal.amigo_secreto.config.ConfiguracaoDoAmbiente

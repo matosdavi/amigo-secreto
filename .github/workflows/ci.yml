@@ -1,0 +1,86 @@
+# CI gratuito: GitHub Actions é ilimitado em repositórios públicos.
+name: CI
+
+on:
+  push:
+    branches: [main, "feature/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Build e testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: mvnw verify
+        run: ./mvnw -B verify
+
+  smoke:
+    name: Ponta a ponta (PostgreSQL real, modo produção)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: amigo_secreto
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      APP_ENV: production
+      ADMIN_SENHA: senha-do-ci
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/amigo_secreto?sslmode=disable
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: maven
+      - name: Empacotar
+        run: ./mvnw -B -q package -DskipTests
+
+      # Sobe o .jar como no Render e faz o fluxo completo: cadastrar, sortear e revelar.
+      - name: Smoke test
+        run: |
+          java -jar target/*.jar > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -fs localhost:8080/health && break; sleep 2; done
+          curl -fs localhost:8080/health | jq -e '.database == "up"'
+
+          H="X-Senha-Admin: $ADMIN_SENHA"
+          for nome in Ana Bruno Carla Davi; do
+            curl -fs -X POST -H "$H" -H 'Content-Type: application/json' \
+              -d "{\"nome\":\"$nome\"}" localhost:8080/api/admin/participantes
+          done
+          curl -fs -X POST -H "$H" localhost:8080/api/admin/sorteio
+
+          TOKEN=$(curl -fs -H "$H" localhost:8080/api/admin | jq -r '.participantes[0].token')
+          curl -fs -X POST "localhost:8080/api/participante/$TOKEN/revelar" | jq -e '.amigo != .nome'
+          curl -fs -H "$H" localhost:8080/api/admin | jq -e '[.participantes[] | select(.visualizou)] | length == 1'
+
+          # sem senha: 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/admin)" = 401
+          # link inexistente: 404
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/participante/nao-existe)" = 404
+          echo "Smoke test OK"
+      - name: Log da aplicação
+        if: failure()
+        run: cat app.log
+
+  docker:
+    name: Imagem Docker
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # Só compila (não publica): garante que o Dockerfile nunca quebre em silêncio.
+      - name: docker build
+        run: docker build -t amigo-secreto:ci .
