@@ -24,6 +24,27 @@ Organizador                                 Cada participante
 8. Acompanha quem “já viu” ✅
 ```
 
+## Guia do organizador 📋
+
+Roteiro para quando chegar a hora de usar (o app já está publicado no Render e no Neon).
+
+**Uns dias antes**
+- [ ] Abra `https://<seu-app>.onrender.com/health` e espere responder `"status": "ok"` (o primeiro acesso pode levar ~1 minuto).
+- [ ] Entre no painel (`/organizador`) com a `ADMIN_SENHA`. Esqueceu? Ela está nas variáveis de ambiente do serviço no Render.
+- [ ] Se sobrou algo do ano anterior: **Desfazer sorteio** e ajuste a lista (os participantes continuam salvos de um ano para o outro).
+
+**No dia de sortear**
+1. Defina o **nome da comemoração** (ex.: “Amigo Secreto da Família 2026”).
+2. Adicione os participantes (mínimo 3).
+3. **Sortear agora**.
+4. Em cada nome, toque em **💬 WhatsApp** e envie a mensagem para a pessoa certa. Mande sempre a partir do endereço do Render, nunca de `localhost`.
+5. Acompanhe no painel quem **✅ já viu**. Quem não abrir, é só reenviar o mesmo link.
+
+**Imprevistos**
+- Mandou o link para a pessoa errada → **🔁 Novo link** naquele nome (o antigo para de funcionar) e reenvie.
+- Alguém entrou ou saiu depois do sorteio → **Desfazer sorteio**, ajuste a lista, sorteie de novo e **reenvie todos os links** (os links continuam os mesmos, mas o amigo de cada um muda).
+- A tela demora para abrir → o servidor estava dormindo; espere cerca de 1 minuto.
+
 ## Tecnologias
 
 | Item | Versão |
@@ -36,7 +57,11 @@ Organizador                                 Cada participante
 
 ## Executando localmente
 
-Pré-requisito: **JDK 17+** instalado (`java -version` deve mostrar 17 ou mais).
+Pré-requisito: **JDK 17+** instalado (`java -version` deve mostrar 17 ou mais). No Windows:
+
+```powershell
+winget install EclipseAdoptium.Temurin.21.JDK
+```
 
 ```bash
 # Windows
@@ -63,7 +88,7 @@ Os dados ficam salvos na pasta `data/` (banco H2 em arquivo).
 
 ```bash
 ./mvnw verify                       # compila e roda os testes
-java -jar target/amigo-secreto-0.0.1-SNAPSHOT.jar
+java -jar target/amigo-secreto-1.0.0.jar
 ```
 
 ### Configuração (`.env`)
@@ -117,7 +142,7 @@ ADMIN_SENHA  = uma-senha-forte (mínimo 8 caracteres)
 
 Em produção a aplicação **se recusa a subir** se faltar `DATABASE_URL` ou `ADMIN_SENHA`, e a mensagem de erro aparece nos logs do Render. Isso evita dois problemas silenciosos: usar o H2 (o disco do plano grátis é apagado a cada reinício) e uma senha temporária que mudaria a cada vez que o servidor acorda.
 
-Depois do deploy, acesse `https://<seu-app>.onrender.com/organizador` e envie os links **a partir desse endereço**.
+Depois do deploy, acesse `https://<seu-app>.onrender.com/organizador` e envie os links **a partir desse endereço**. Cada push na `main` gera um novo deploy automático no Render; os dados ficam no Neon e não são afetados.
 
 **⚠️ Servidor dormindo:** no plano grátis do Render, a aplicação "dorme" depois de 15 minutos sem acesso, e o primeiro acesso leva cerca de 1 minuto para acordá-la. Antes de mandar os links, abra o painel você mesmo, e avise os participantes: *"se demorar um pouquinho para abrir, é normal"*.
 
@@ -164,13 +189,14 @@ src/main/java/com/natal/amigo_secreto
 ├── controller/    # API REST: participante (público), admin (com senha) e /health
 ├── dto/           # records de entrada/saída da API
 ├── exception/     # erros de negócio → respostas JSON amigáveis
-├── model/         # entidade Participante
+├── model/         # entidades Participante e Comemoracao (nome do evento)
 ├── repository/    # acesso ao banco (Spring Data JPA)
-└── service/       # regras do sorteio
+└── service/       # regras do sorteio e do nome da comemoração
 src/main/resources/static
 ├── index.html        # página inicial
 ├── amigo.html        # revelação do amigo secreto (link individual)
 ├── organizador.html  # painel do organizador
+├── evento.js         # nome da comemoração, compartilhado pelas páginas
 └── estilo.css
 ```
 
@@ -179,7 +205,7 @@ src/main/resources/static
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/health` | Aplicação e banco respondendo (health check do Render) |
-| `GET` | `/api/evento` | Nome do evento |
+| `GET` | `/api/evento` | Nome da comemoração |
 | `GET` | `/api/participante/{token}` | Nome do participante e se o sorteio já foi feito |
 | `POST` | `/api/participante/{token}/revelar` | Revela quem o participante tirou |
 | `GET` | `/api/admin` | Lista de participantes e status (🔒) |

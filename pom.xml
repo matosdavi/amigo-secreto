@@ -10,22 +10,10 @@
 	</parent>
 	<groupId>com.natal</groupId>
 	<artifactId>amigo-secreto</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>amigo-secreto</name>
-	<description>Amigo secreto da família: sorteio e revelação individual pelo celular</description>
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<description>Amigo secreto online: sorteio e revelação individual pelo celular</description>
+	<url>https://github.com/matosdavi/amigo-secreto</url>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
