@@ -314,6 +314,44 @@ input:focus { border-color: var(--verde); outline: none; }
 }
 .selo.ok { background: var(--verde-claro); color: var(--verde); }
 
+/* ---------- Tema "Amigo de Uma Cor Só" ---------- */
+.interruptor {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 60px;
+    font-weight: 800;
+    cursor: pointer;
+    margin: 0 0 8px;
+}
+.interruptor input { width: 32px; height: 32px; flex-shrink: 0; accent-color: var(--verde); cursor: pointer; }
+
+.interruptor input:disabled, .interruptor input:disabled + span { cursor: not-allowed; opacity: .6; }
+
+.cor-presente {
+    border-top: 2px dashed var(--borda);
+    padding-top: 14px;
+    margin: 0 0 16px;
+}
+.cor-presente .rotulo-cor { font-size: 1.1rem; color: var(--texto-suave); margin: 0 0 6px; }
+.cor-presente .linha-cor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0;
+}
+.cor-presente strong { font-size: 2rem; font-weight: 900; line-height: 1.15; }
+.cor-presente .amostra {
+    width: 52px;
+    height: 52px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 3px solid var(--borda);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, .45);
+}
+.cor-presente.escondido { filter: blur(12px); user-select: none; }
+
 .link-sutil {
     display: block;
     text-align: center;

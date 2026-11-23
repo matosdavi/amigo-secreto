@@ -45,6 +45,14 @@ Roteiro para quando chegar a hora de usar (o app já está publicado no Render e
 - Alguém entrou ou saiu depois do sorteio → **Desfazer sorteio**, ajuste a lista, sorteie de novo e **reenvie todos os links** (os links continuam os mesmos, mas o amigo de cada um muda).
 - A tela demora para abrir → o servidor estava dormindo; espere cerca de 1 minuto.
 
+**Tema “Amigo de Uma Cor Só” (opcional)**
+- **Antes de sortear**, marque no painel **🎨 Sortear uma cor de presente para cada pessoa**.
+- No sorteio, cada pessoa recebe também uma cor **diferente** de uma lista de 14 cores fáceis (vermelho, azul, verde, amarelo, rosa, roxo, laranja, preto, branco, cinza, marrom, dourado, prateado e bege). Por isso, com o tema ligado, o limite é de 14 pessoas.
+- Ao abrir o link, a pessoa vê “Seu amigo secreto é: Fulano · 🎁 Dê um presente da cor: Azul”. A mensagem do WhatsApp ganha um lembrete do tema.
+- Depois do sorteio, o tema fica travado. Para mudar, **Desfazer sorteio** (as cores são apagadas e sorteadas de novo no próximo sorteio).
+- Em outro tema, é só **desmarcar** antes de sortear: o app volta a ser o amigo secreto de sempre.
+- A lista de cores fica em `CoresDoTema.java`.
+
 ## Tecnologias
 
 | Item | Versão |
@@ -189,14 +197,14 @@ src/main/java/com/natal/amigo_secreto
 ├── controller/    # API REST: participante (público), admin (com senha) e /health
 ├── dto/           # records de entrada/saída da API
 ├── exception/     # erros de negócio → respostas JSON amigáveis
-├── model/         # entidades Participante e Comemoracao (nome do evento)
+├── model/         # entidades Participante e Comemoracao (nome do evento e tema de cor)
 ├── repository/    # acesso ao banco (Spring Data JPA)
 └── service/       # regras do sorteio e do nome da comemoração
 src/main/resources/static
 ├── index.html        # página inicial
 ├── amigo.html        # revelação do amigo secreto (link individual)
 ├── organizador.html  # painel do organizador
-├── evento.js         # nome da comemoração, compartilhado pelas páginas
+├── evento.js         # nome da comemoração e tema de cor, compartilhados pelas páginas
 └── estilo.css
 ```
 
@@ -205,14 +213,15 @@ src/main/resources/static
 | Método | Rota | Descrição |
 |---|---|---|
 | `GET` | `/health` | Aplicação e banco respondendo (health check do Render) |
-| `GET` | `/api/evento` | Nome da comemoração |
+| `GET` | `/api/evento` | Nome da comemoração e se o tema de cor está ligado |
 | `GET` | `/api/participante/{token}` | Nome do participante e se o sorteio já foi feito |
-| `POST` | `/api/participante/{token}/revelar` | Revela quem o participante tirou |
+| `POST` | `/api/participante/{token}/revelar` | Revela quem o participante tirou (e a cor do presente, se o tema de cor estiver ligado) |
 | `GET` | `/api/admin` | Lista de participantes e status (🔒) |
 | `POST` | `/api/admin/participantes` | Adiciona participante `{"nome": "..."}` (🔒) |
 | `DELETE` | `/api/admin/participantes/{id}` | Remove participante (🔒) |
 | `POST` | `/api/admin/participantes/{id}/novo-link` | Gera um novo link (🔒) |
 | `PUT` | `/api/admin/evento` | Altera o nome da comemoração `{"nome": "..."}` (🔒) |
+| `PUT` | `/api/admin/tema-cor` | Liga/desliga o tema “Amigo de Uma Cor Só” `{"ativo": true}`; só antes do sorteio (🔒) |
 | `POST` | `/api/admin/sorteio` | Realiza o sorteio (🔒) |
 | `DELETE` | `/api/admin/sorteio` | Desfaz o sorteio (🔒) |
 

@@ -5,6 +5,9 @@
 const Evento = {
     nome: "Amigo Secreto",
 
+    /** Tema "Amigo de Uma Cor Só" ligado pelo organizador. */
+    temaCor: false,
+
     /** true se o próprio nome já diz "amigo secreto" (ignorando maiúsculas e acentos). */
     jaDizAmigoSecreto(nome) {
         const normalizado = nome.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -27,8 +30,13 @@ const Evento = {
     async carregar() {
         try {
             const resposta = await fetch("/api/evento");
-            if (resposta.ok) Evento.mostrar((await resposta.json()).nome);
+            if (resposta.ok) {
+                const dados = await resposta.json();
+                Evento.temaCor = dados.temaCor === true;
+                Evento.mostrar(dados.nome);
+            }
         } catch { /* mantém o nome padrão */ }
         return Evento.nome;
     },
 };
+

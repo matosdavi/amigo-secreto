@@ -21,10 +21,12 @@ public class SorteioService {
     static final int MINIMO_PARTICIPANTES = 3;
 
     private final ParticipanteRepository repository;
+    private final ComemoracaoService comemoracao;
     private final SecureRandom random = new SecureRandom();
 
-    public SorteioService(ParticipanteRepository repository) {
+    public SorteioService(ParticipanteRepository repository, ComemoracaoService comemoracao) {
         this.repository = repository;
+        this.comemoracao = comemoracao;
     }
 
     // ---------- Organizador ----------
@@ -34,7 +36,21 @@ public class SorteioService {
         List<ParticipanteAdmin> lista = repository.findAllByOrderByNomeAsc().stream()
                 .map(p -> new ParticipanteAdmin(p.getId(), p.getNome(), p.getToken(), p.isVisualizou()))
                 .toList();
-        return new PainelAdmin(repository.existsByAmigoIsNotNull(), lista);
+        List<String> cores = CoresDoTema.TODAS.stream().map(CoresDoTema.Cor::nome).toList();
+        return new PainelAdmin(repository.existsByAmigoIsNotNull(), lista, cores);
+    }
+
+    /**
+     * Liga/desliga o tema "Amigo de Uma Cor Só". Só antes do sorteio: as cores
+     * são sorteadas junto com os amigos, então mudar depois deixaria metade sem cor.
+     */
+    @Transactional
+    public void mudarTemaCor(boolean ativo) {
+        if (repository.existsByAmigoIsNotNull()) {
+            throw RegraException.conflito(
+                    "O sorteio já foi feito. Para mudar o tema de cor, desfaça o sorteio primeiro.");
+        }
+        comemoracao.definirTemaCor(ativo);
     }
 
     @Transactional
@@ -72,6 +88,8 @@ public class SorteioService {
      *   <li>todo mundo tira exatamente uma pessoa e é tirado exatamente uma vez;</li>
      *   <li>forma um único ciclo completo (não aparecem "grupinhos" fechados).</li>
      * </ul>
+     * Com o tema de cor ligado, cada pessoa também recebe uma cor diferente
+     * para o presente que vai dar (embaralha a lista de cores e distribui em ordem).
      */
     @Transactional
     public void sortear() {
@@ -82,12 +100,25 @@ public class SorteioService {
             throw RegraException.invalido(
                     "São necessárias pelo menos " + MINIMO_PARTICIPANTES + " pessoas para sortear.");
         }
+        boolean temaCor = comemoracao.temaCor();
+        if (temaCor && participantes.size() > CoresDoTema.TODAS.size()) {
+            throw RegraException.invalido("Com o tema de cor, o limite é de " + CoresDoTema.TODAS.size()
+                    + " pessoas (uma cor diferente para cada). Desligue o tema ou tire alguém da lista.");
+        }
 
         Collections.shuffle(participantes, random);
         for (int i = 0; i < participantes.size(); i++) {
             Participante atual = participantes.get(i);
             Participante proximo = participantes.get((i + 1) % participantes.size());
             atual.setAmigo(proximo);
+        }
+
+        if (temaCor) {
+            List<CoresDoTema.Cor> cores = new ArrayList<>(CoresDoTema.TODAS);
+            Collections.shuffle(cores, random);
+            for (int i = 0; i < participantes.size(); i++) {
+                participantes.get(i).setCorDoPresente(cores.get(i).nome());
+            }
         }
         // Sem save(): dentro de @Transactional o JPA detecta as mudanças
         // nas entidades carregadas e grava tudo no commit (dirty checking).
@@ -113,7 +144,10 @@ public class SorteioService {
             throw RegraException.conflito("O sorteio ainda não foi feito. Volte mais tarde!");
         }
         p.marcarComoVisualizado();
-        return new Revelacao(p.getNome(), p.getAmigo().getNome());
+        // Cor fora da lista (ou tema desligado) não aparece.
+        CoresDoTema.Cor cor = comemoracao.temaCor() ? CoresDoTema.buscar(p.getCorDoPresente()) : null;
+        return new Revelacao(p.getNome(), p.getAmigo().getNome(), cor != null,
+                cor == null ? null : cor.nome(), cor == null ? null : cor.hex());
     }
 
     // ---------- Auxiliares ----------

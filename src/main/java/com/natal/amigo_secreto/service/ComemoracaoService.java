@@ -30,8 +30,28 @@ public class ComemoracaoService {
             throw RegraException.invalido("O nome da comemoração pode ter até 40 letras.");
         }
 
-        Comemoracao comemoracao = repository.findById(Comemoracao.ID_UNICO).orElseGet(Comemoracao::new);
+        Comemoracao comemoracao = carregarOuCriar();
         comemoracao.setNome(limpo.isEmpty() ? Comemoracao.NOME_PADRAO : limpo);
         repository.save(comemoracao);
+    }
+
+    /** Tema "Amigo de Uma Cor Só" ligado? Desligado por padrão. */
+    @Transactional(readOnly = true)
+    public boolean temaCor() {
+        return repository.findById(Comemoracao.ID_UNICO)
+                .map(Comemoracao::isTemaCor)
+                .orElse(false);
+    }
+
+    /** Liga/desliga o tema de cor. As cores salvas ficam guardadas, só deixam de aparecer. */
+    @Transactional
+    public void definirTemaCor(boolean ativo) {
+        Comemoracao comemoracao = carregarOuCriar();
+        comemoracao.setTemaCor(ativo);
+        repository.save(comemoracao);
+    }
+
+    private Comemoracao carregarOuCriar() {
+        return repository.findById(Comemoracao.ID_UNICO).orElseGet(Comemoracao::new);
     }
 }

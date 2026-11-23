@@ -29,6 +29,13 @@ public class Participante {
     /** Se o participante já abriu o link e viu quem tirou. */
     private boolean visualizou;
 
+    /**
+     * Tema "Amigo de Uma Cor Só": cor do presente que ESTE participante vai dar.
+     * Sorteada junto com o amigo; null quando o tema está desligado.
+     */
+    @Column(length = 30)
+    private String corDoPresente;
+
     protected Participante() {
         // exigido pelo JPA
     }
@@ -52,6 +59,7 @@ public class Participante {
     public void limparSorteio() {
         this.amigo = null;
         this.visualizou = false;
+        this.corDoPresente = null;
     }
 
     public Long getId() {
@@ -80,5 +88,13 @@ public class Participante {
 
     public void marcarComoVisualizado() {
         this.visualizou = true;
+    }
+
+    public String getCorDoPresente() {
+        return corDoPresente;
+    }
+
+    public void setCorDoPresente(String corDoPresente) {
+        this.corDoPresente = corDoPresente;
     }
 }

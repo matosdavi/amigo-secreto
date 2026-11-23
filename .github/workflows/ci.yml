@@ -72,6 +72,28 @@ jobs:
           curl -fs -X POST "localhost:8080/api/participante/$TOKEN/revelar" | jq -e '.amigo != .nome'
           curl -fs -H "$H" localhost:8080/api/admin | jq -e '[.participantes[] | select(.visualizou)] | length == 1'
 
+          # tema "Amigo de Uma Cor Só": desligado por padrão; ligado, cada um recebe uma cor diferente
+          J='Content-Type: application/json'
+          curl -fs localhost:8080/api/evento | jq -e '.temaCor == false'
+          curl -fs -X POST "localhost:8080/api/participante/$TOKEN/revelar" | jq -e '.temaCor == false and .cor == null'
+          # depois do sorteio o tema fica travado
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT -H "$H" -H "$J" -d '{"ativo":true}' localhost:8080/api/admin/tema-cor)" = 409
+
+          curl -fs -X DELETE -H "$H" localhost:8080/api/admin/sorteio
+          curl -fs -X PUT -H "$H" -H "$J" -d '{"ativo":true}' localhost:8080/api/admin/tema-cor
+          curl -fs -X POST -H "$H" localhost:8080/api/admin/sorteio
+          CORES=$(for t in $(curl -fs -H "$H" localhost:8080/api/admin | jq -r '.participantes[].token'); do
+            curl -fs -X POST "localhost:8080/api/participante/$t/revelar" | jq -er 'select(.temaCor and .corHex != null) | .cor'
+          done)
+          test "$(echo "$CORES" | sort -u | wc -l)" = 4   # 4 pessoas, 4 cores diferentes
+
+          # desligado de novo: volta ao amigo secreto de sempre
+          curl -fs -X DELETE -H "$H" localhost:8080/api/admin/sorteio
+          curl -fs -X PUT -H "$H" -H "$J" -d '{"ativo":false}' localhost:8080/api/admin/tema-cor
+          curl -fs -X POST -H "$H" localhost:8080/api/admin/sorteio
+          curl -fs -X POST "localhost:8080/api/participante/$TOKEN/revelar" | jq -e '.temaCor == false and .cor == null'
+          curl -fs localhost:8080/api/evento | jq -e '.nome == "Amigo Chocolate" and .temaCor == false'
+
           # sem senha: 401
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/api/admin)" = 401
           # link inexistente: 404

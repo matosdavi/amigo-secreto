@@ -54,6 +54,23 @@
                 WhatsApp sempre deixam claro que é um <strong>amigo secreto</strong>.</p>
         </section>
 
+        <!-- Tema "Amigo de Uma Cor Só" -->
+        <section class="cartao">
+            <h2>🎨 Tema “Amigo de Uma Cor Só”</h2>
+            <label class="interruptor">
+                <input id="tema-cor" type="checkbox"/>
+                <span>Sortear uma cor de presente para cada pessoa</span>
+            </label>
+            <p class="suave" style="margin:0">Ligado: junto com o amigo secreto, cada pessoa recebe uma cor
+                <strong>diferente</strong> e, ao abrir o link, vê “dê um presente da cor X”. Desligado: é o amigo
+                secreto de sempre, sem cor.</p>
+            <p class="suave" style="font-size:.8rem;margin:10px 0 0">Cores possíveis (<span id="qtd-cores"></span>,
+                então até <span class="js-limite"></span> pessoas): <span id="lista-cores"></span>.</p>
+            <div id="aviso-limite-cores" class="aviso erro oculto"></div>
+            <div id="aviso-tema-travado" class="aviso oculto">🔒 O sorteio já foi feito. Para ligar ou desligar o
+                tema, desfaça o sorteio primeiro.</div>
+        </section>
+
         <!-- Adicionar -->
         <section id="sec-adicionar" class="cartao">
             <h2>1. Quem vai participar?</h2>
@@ -95,6 +112,7 @@
     const $ = (id) => document.getElementById(id);
     const CHAVE = "amigo-secreto-senha";
     let senha = sessionStorage.getItem(CHAVE) || "";
+    let painelAtual = {sorteioRealizado: false, participantes: [], coresDoTema: []};
     async function api(caminho, opcoes = {}) {
         const resp = await fetch("/api/admin" + caminho, {
             ...opcoes,
@@ -122,8 +140,28 @@
     }
 
     function mensagemWhatsApp(nome, token) {
+        const tema = Evento.temaCor
+            ? `\n\n🎨 Este ano o presente tem *cor sorteada*: ela aparece junto com o nome de quem você tirar.`
+            : "";
         return `Oi, ${nome}! 🎁\n\nEste é o seu link do *${Evento.descricao()}*.\n` +
-            `Toque nele para descobrir quem é o seu amigo secreto (não mostre para ninguém! 🤫):\n\n${linkDe(token)}`;
+            `Toque nele para descobrir quem é o seu amigo secreto (não mostre para ninguém! 🤫):\n\n${linkDe(token)}${tema}`;
+    }
+
+    /** Cartão do tema: lista de cores, limite de pessoas e trava depois do sorteio. */
+    function desenharTema() {
+        const {sorteioRealizado, participantes, coresDoTema} = painelAtual;
+        const limite = coresDoTema.length;
+        $("qtd-cores").textContent = `${limite} cores`;
+        document.querySelectorAll(".js-limite").forEach((el) => el.textContent = limite);
+        $("lista-cores").textContent = coresDoTema.join(", ");
+        $("tema-cor").checked = Evento.temaCor;
+        $("tema-cor").disabled = sorteioRealizado;
+        $("aviso-tema-travado").classList.toggle("oculto", !sorteioRealizado);
+
+        const excesso = Evento.temaCor && participantes.length > limite;
+        $("aviso-limite-cores").textContent = `⚠️ Há ${participantes.length} pessoas na lista, mas só ${limite} cores. ` +
+            "Desligue o tema ou tire alguém para poder sortear.";
+        $("aviso-limite-cores").classList.toggle("oculto", !excesso);
     }
 
     function botao(texto, classe, aoClicar) {
@@ -136,6 +174,7 @@
     }
 
     function desenhar(painel) {
+        painelAtual = painel;
         const {sorteioRealizado, participantes} = painel;
         $("sec-adicionar").classList.toggle("oculto", sorteioRealizado);
         $("bloco-sortear").classList.toggle("oculto", sorteioRealizado);
@@ -146,6 +185,7 @@
         $("titulo-lista").textContent = sorteioRealizado
             ? `Participantes (${viram} de ${participantes.length} já viram)`
             : `Participantes (${participantes.length})`;
+        desenharTema();
 
         const lista = $("lista");
         lista.replaceChildren();
@@ -237,6 +277,7 @@
         ev.preventDefault();
         senha = $("senha").value;
         try {
+            await eventoPronto;
             await carregar();
             sessionStorage.setItem(CHAVE, senha);
             entrarNoPainel();
@@ -255,7 +296,10 @@
     });
 
     $("btn-sortear").addEventListener("click", () => {
-        if (!confirm("Fazer o sorteio agora? Depois disso a lista de participantes fica travada.")) return;
+        const avisoCor = Evento.temaCor
+            ? "\n\n🎨 Tema de cor ligado: cada pessoa também vai receber uma cor de presente diferente."
+            : "";
+        if (!confirm("Fazer o sorteio agora? Depois disso a lista de participantes fica travada." + avisoCor)) return;
         executar(() => api("/sorteio", {method: "POST"}), "🎉 Sorteio realizado! Agora envie os links.");
     });
 
@@ -277,13 +321,29 @@
     async function carregarEvento() {
         const nome = await Evento.carregar();
         document.title = "Organizador · " + nome;
+        $("tema-cor").checked = Evento.temaCor;
         return nome;
     }
 
-    carregarEvento().then((nome) => $("nome-evento").value = nome);
+    $("tema-cor").addEventListener("change", (ev) => {
+        const ativo = ev.target.checked;
+        executar(async () => {
+            try {
+                await api("/tema-cor", {method: "PUT", body: JSON.stringify({ativo})});
+            } catch (e) {
+                ev.target.checked = !ativo;
+                throw e;
+            }
+            await carregarEvento();
+        }, ativo ? "🎨 Tema de cor ligado. As cores serão sorteadas junto com o amigo secreto."
+                 : "Tema de cor desligado.");
+    });
+
+    // O painel só é desenhado depois de saber se o tema de cor está ligado.
+    const eventoPronto = carregarEvento().then((nome) => $("nome-evento").value = nome);
 
     if (senha) {
-        carregar().then(entrarNoPainel).catch(() => {});
+        eventoPronto.then(carregar).then(entrarNoPainel).catch(() => {});
     } else {
         sair();
     }

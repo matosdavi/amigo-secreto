@@ -22,7 +22,7 @@ public class SorteioController {
 
     @GetMapping("/evento")
     public Evento evento() {
-        return new Evento(comemoracao.nome());
+        return new Evento(comemoracao.nome(), comemoracao.temaCor());
     }
 
     @GetMapping("/participante/{token}")

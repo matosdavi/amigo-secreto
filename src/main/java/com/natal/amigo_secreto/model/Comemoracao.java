@@ -20,11 +20,26 @@ public class Comemoracao {
     @Column(nullable = false, length = 40)
     private String nome = NOME_PADRAO;
 
+    /**
+     * Tema "Amigo de Uma Cor Só": cada participante tem uma cor favorita,
+     * mostrada na revelação. Boolean (e não boolean) para a coluna nova
+     * aceitar null nas linhas que já existem no banco; null = desligado.
+     */
+    private Boolean temaCor;
+
     public String getNome() {
         return nome;
     }
 
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    public boolean isTemaCor() {
+        return Boolean.TRUE.equals(temaCor);
+    }
+
+    public void setTemaCor(boolean temaCor) {
+        this.temaCor = temaCor;
     }
 }

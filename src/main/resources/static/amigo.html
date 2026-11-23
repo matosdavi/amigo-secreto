@@ -54,6 +54,14 @@
         <div id="revelacao" class="cartao revelacao oculto" aria-live="polite">
             <p class="rotulo">Seu amigo secreto é:</p>
             <p id="nome-amigo" class="nome-amigo"></p>
+            <!-- Tema "Amigo de Uma Cor Só" (só aparece se o organizador ligar) -->
+            <div id="bloco-cor" class="cor-presente oculto">
+                <p class="rotulo-cor">🎁 Dê um presente da cor:</p>
+                <p class="linha-cor">
+                    <span id="amostra-cor" class="amostra" aria-hidden="true"></span>
+                    <strong id="cor-presente"></strong>
+                </p>
+            </div>
             <div class="aviso">🤫 É segredo! Não mostre para ninguém.</div>
             <button id="btn-esconder" class="botao claro">🙈 Esconder o nome</button>
         </div>
@@ -101,6 +109,7 @@
         try {
             const r = await api("/api/participante/" + encodeURIComponent(token) + "/revelar", {method: "POST"});
             $("nome-amigo").textContent = r.amigo;
+            mostrarCor(r);
             $("presente").classList.add("aberto");
             $("presente").setAttribute("aria-label", "Presente aberto");
             $("dica").classList.add("oculto");
@@ -117,9 +126,19 @@
         }
     }
 
+    function mostrarCor(r) {
+        const temCor = Boolean(r.temaCor && r.cor);
+        $("bloco-cor").classList.toggle("oculto", !temCor);
+        if (temCor) {
+            $("cor-presente").textContent = r.cor;
+            $("amostra-cor").style.background = r.corHex;
+        }
+    }
+
     function alternarNome() {
         const nome = $("nome-amigo");
         const escondido = nome.classList.toggle("escondido");
+        $("bloco-cor").classList.toggle("escondido", escondido);
         $("btn-esconder").textContent = escondido ? "👀 Mostrar o nome" : "🙈 Esconder o nome";
     }
 

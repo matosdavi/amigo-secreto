@@ -1,8 +1,9 @@
 package com.natal.amigo_secreto.controller;
 
-import com.natal.amigo_secreto.dto.Dtos.Evento;
+import com.natal.amigo_secreto.dto.Dtos.NovoNome;
 import com.natal.amigo_secreto.dto.Dtos.NovoParticipante;
 import com.natal.amigo_secreto.dto.Dtos.PainelAdmin;
+import com.natal.amigo_secreto.dto.Dtos.TemaCor;
 import com.natal.amigo_secreto.service.ComemoracaoService;
 import com.natal.amigo_secreto.service.SorteioService;
 import org.springframework.http.HttpStatus;
@@ -23,8 +24,14 @@ public class AdminController {
 
     @PutMapping("/evento")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void renomearEvento(@RequestBody Evento evento) {
+    public void renomearEvento(@RequestBody NovoNome evento) {
         comemoracao.renomear(evento.nome());
+    }
+
+    @PutMapping("/tema-cor")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void temaCor(@RequestBody TemaCor tema) {
+        service.mudarTemaCor(tema.ativo());
     }
 
     @GetMapping
