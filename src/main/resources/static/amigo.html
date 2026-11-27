@@ -46,8 +46,24 @@
 
         <div class="palco">
             <button id="presente" class="presente" aria-label="Abrir o presente">
-                <span class="caixa"></span>
-                <span class="tampa"><span class="laco"></span></span>
+                <!-- Um embrulho por ocasião; o CSS mostra só o da ocasião vestida -->
+                <span class="embrulho embrulho-natal">
+                    <span class="caixa"></span>
+                    <span class="tampa-grupo"><span class="tampa"></span><span class="no"></span><span class="laco"></span></span>
+                </span>
+                <span class="embrulho embrulho-festa">
+                    <span class="caixa"></span>
+                    <span class="tampa-grupo"><span class="tampa"></span><span class="no"></span><span class="laco"></span></span>
+                </span>
+                <span class="embrulho embrulho-pascoa">
+                    <span class="ovo-baixo"></span>
+                    <span class="ovo-cima"></span>
+                </span>
+                <span class="embrulho embrulho-trabalho">
+                    <span class="envelope-corpo"></span>
+                    <span class="envelope-aba"></span>
+                    <span class="envelope-selo"></span>
+                </span>
             </button>
         </div>
         <p id="dica" class="dica-toque">👆 Toque no presente</p>
@@ -150,7 +166,9 @@
 
     function soltarConfete() {
         if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-        const cores = ["#b3261e", "#1d6b4f", "#e0a526", "#ffffff", "#e8736b"];
+        // Cores do confete vêm da roupa da ocasião (--confete-1..4 no estilo.css)
+        const estilo = getComputedStyle(document.body);
+        const cores = [1, 2, 3, 4].map((n) => estilo.getPropertyValue("--confete-" + n).trim());
         for (let i = 0; i < 90; i++) {
             const c = document.createElement("span");
             c.className = "confete";

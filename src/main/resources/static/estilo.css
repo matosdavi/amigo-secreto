@@ -206,91 +206,190 @@ input:focus { border-color: var(--foco); outline: none; }
 .aviso.erro { background: var(--erro-claro); color: var(--erro); }
 .aviso.ok { background: var(--ok-claro); color: var(--ok); }
 
-/* ---------- Presente ---------- */
+/* ---------- Presente: um embrulho por ocasião (só CSS) ---------- */
 .palco {
     position: relative;
     display: flex;
     justify-content: center;
-    padding: 40px 0 16px;
+    padding: 48px 0 16px;
 }
 
 .presente {
     position: relative;
-    width: 200px;
-    height: 190px;
+    width: 220px;
+    height: 200px;
     border: none;
     background: none;
     padding: 0;
     cursor: pointer;
+    perspective: 600px;
     animation: balanca 2.4s ease-in-out infinite;
     -webkit-tap-highlight-color: transparent;
 }
+.presente.aberto { animation: none; cursor: default; }
 
-.presente .caixa {
+.embrulho { display: none; position: absolute; inset: 0; }
+body:not([data-ocasiao]) .embrulho-natal,
+body[data-ocasiao="natal"] .embrulho-natal,
+body[data-ocasiao="pascoa"] .embrulho-pascoa,
+body[data-ocasiao="trabalho"] .embrulho-trabalho,
+body[data-ocasiao="festa"] .embrulho-festa { display: block; }
+
+/* Caixas (Natal e Festa): caixa + tampa larga com aba, nó e laço */
+.caixa {
     position: absolute;
     bottom: 0;
-    left: 10px;
+    left: 20px;
     width: 180px;
-    height: 130px;
-    background: var(--destaque);
-    border-radius: 8px 8px 14px 14px;
+    height: 128px;
+    border-radius: 0 0 16px 16px;
+    background-color: var(--destaque);
+    background-image: linear-gradient(90deg, transparent 78px, var(--destaque-2) 78px, var(--destaque-2) 102px, transparent 102px);
     box-shadow: inset 0 -12px 0 rgba(0, 0, 0, .12);
 }
-.presente .caixa::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 30px;
-    height: 100%;
-    transform: translateX(-50%);
-    background: var(--destaque-2);
+.embrulho-festa .caixa {
+    background-image:
+        linear-gradient(90deg, transparent 78px, var(--destaque-2) 78px, var(--destaque-2) 102px, transparent 102px),
+        radial-gradient(#ff5c8a 22%, transparent 24%),
+        radial-gradient(#23c9a9 22%, transparent 24%);
+    background-size: 100% 100%, 36px 36px, 36px 36px;
+    background-position: 0 0, 0 6px, 18px 24px;
 }
-.presente .tampa {
+.tampa-grupo {
     position: absolute;
-    top: 38px;
-    left: 0;
-    width: 200px;
+    left: 6px;
+    bottom: 124px;
+    width: 208px;
     height: 40px;
-    background: var(--destaque);
-    border-radius: 8px;
-    box-shadow: 0 6px 0 rgba(0, 0, 0, .12);
-    transition: transform .7s cubic-bezier(.2, 1.4, .4, 1), opacity .7s;
     transform-origin: 20% 100%;
+    transition: transform .7s cubic-bezier(.2, 1.4, .4, 1), opacity .7s;
 }
-.presente .tampa::before {
-    content: "";
+.tampa {
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    background:
+        linear-gradient(90deg, transparent 92px, var(--destaque-2) 92px, var(--destaque-2) 116px, transparent 116px),
+        linear-gradient(rgba(255, 255, 255, .10), rgba(255, 255, 255, .10)),
+        var(--destaque);
+    box-shadow: 0 8px 0 -1px rgba(0, 0, 0, .22), inset 0 -6px 0 rgba(0, 0, 0, .10);
+}
+.no {
     position: absolute;
     left: 50%;
-    top: 0;
-    width: 30px;
-    height: 100%;
-    transform: translateX(-50%);
+    top: -14px;
+    width: 26px;
+    height: 20px;
+    margin-left: -13px;
+    border-radius: 8px;
     background: var(--destaque-2);
+    filter: brightness(.9);
 }
-.presente .laco {
-    position: absolute;
-    top: -34px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90px;
-    height: 40px;
-}
-.presente .laco::before,
-.presente .laco::after {
+.laco { position: absolute; left: 50%; top: -42px; width: 0; height: 0; }
+.laco::before,
+.laco::after {
     content: "";
     position: absolute;
     top: 0;
-    width: 42px;
-    height: 36px;
-    border: 9px solid var(--destaque-2);
-    border-radius: 50% 50% 10% 50%;
+    width: 46px;
+    height: 38px;
+    border: 10px solid var(--destaque-2);
+    border-radius: 55% 45% 50% 50%;
 }
-.presente .laco::before { left: 0; transform: rotate(-20deg); }
-.presente .laco::after { right: 0; transform: scaleX(-1) rotate(-20deg); }
+.laco::before { right: 2px; transform: rotate(-22deg); }
+.laco::after { left: 2px; transform: rotate(22deg); }
+/* A tampa sai para o lado e some, sem passar por cima do "Olá" */
+.presente.aberto .tampa-grupo { transform: translate(-84px, -36px) rotate(-30deg); opacity: 0; }
 
-.presente.aberto { animation: none; cursor: default; }
-.presente.aberto .tampa { transform: translate(-60px, -120px) rotate(-35deg); opacity: 0; }
+/* Páscoa e chocolate: ovo que abre ao meio */
+.ovo-cima,
+.ovo-baixo {
+    position: absolute;
+    left: 50%;
+    width: 140px;
+    margin-left: -70px;
+    background: var(--destaque);
+}
+.ovo-baixo {
+    bottom: 0;
+    height: 104px;
+    border-radius: 0 0 70px 70px / 0 0 92px 92px;
+    box-shadow: inset -12px -10px 0 rgba(0, 0, 0, .18);
+}
+.ovo-baixo::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 22px;
+    background: var(--destaque-2);
+    clip-path: polygon(0 0, 100% 0, 100% 40%, 92% 100%, 84% 40%, 76% 100%, 68% 40%, 60% 100%, 52% 40%, 44% 100%, 36% 40%, 28% 100%, 20% 40%, 12% 100%, 4% 40%, 0 70%);
+}
+.ovo-cima {
+    bottom: 104px;
+    height: 84px;
+    border-radius: 70px 70px 0 0 / 100px 100px 0 0;
+    box-shadow: inset -12px 0 0 rgba(0, 0, 0, .18);
+    transform-origin: 20% 100%;
+    transition: transform .7s cubic-bezier(.2, 1.4, .4, 1), opacity .7s;
+}
+.ovo-cima::after {
+    content: "";
+    position: absolute;
+    left: 28px;
+    top: 22px;
+    width: 20px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .25);
+}
+.presente.aberto .ovo-cima { transform: translate(-30px, -50px) rotate(-20deg); opacity: 0; }
+
+/* Trabalho: envelope com aba e selo */
+.envelope-corpo {
+    position: absolute;
+    left: 20px;
+    bottom: 30px;
+    width: 180px;
+    height: 120px;
+    border-radius: 10px;
+    background: var(--destaque);
+    overflow: hidden;
+}
+.envelope-corpo::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .12);
+    clip-path: polygon(0 100%, 50% 42%, 100% 100%);
+}
+.envelope-aba {
+    position: absolute;
+    left: 20px;
+    top: 50px;
+    width: 180px;
+    height: 72px;
+    background: var(--destaque);
+    filter: brightness(.86);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top center;
+    transition: transform .6s ease-in-out;
+}
+.envelope-selo {
+    position: absolute;
+    left: 50%;
+    top: 102px;
+    width: 32px;
+    height: 32px;
+    margin-left: -16px;
+    border-radius: 50%;
+    background: var(--destaque-2);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
+    transition: opacity .3s;
+}
+.presente.aberto .envelope-aba { transform: rotateX(180deg); }
+.presente.aberto .envelope-selo { opacity: 0; }
 
 @keyframes balanca {
     0%, 70%, 100% { transform: rotate(0); }
@@ -313,12 +412,13 @@ input:focus { border-color: var(--foco); outline: none; }
 .revelacao .rotulo { font-size: 1.1rem; color: var(--suave); margin: 0; }
 .revelacao .nome-amigo {
     font-family: var(--letra-titulo);
-    font-size: 2.6rem;
+    font-size: clamp(1.6rem, 9vw, 2.6rem);
     font-weight: 900;
     line-height: 1.1;
     color: var(--destaque);
     margin: 8px 0 16px;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 .revelacao .nome-amigo.escondido {
     color: transparent;
