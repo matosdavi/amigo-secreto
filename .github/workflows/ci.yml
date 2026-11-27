@@ -61,7 +61,17 @@ jobs:
             curl -fs -X POST -H "$H" -H 'Content-Type: application/json' \
               -d "{\"nome\":\"$nome\"}" localhost:8080/api/admin/participantes
           done
+
+          # ocasião ("roupa" da revelação): natal por padrão, muda antes do sorteio, valor inválido é 400
+          curl -fs localhost:8080/api/evento | jq -e '.ocasiao == "natal"'
+          curl -fs -X PUT -H "$H" -H 'Content-Type: application/json' -d '{"ocasiao":"pascoa"}' localhost:8080/api/admin/ocasiao
+          curl -fs localhost:8080/api/evento | jq -e '.ocasiao == "pascoa"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT -H "$H" -H 'Content-Type: application/json' -d '{"ocasiao":"carnaval"}' localhost:8080/api/admin/ocasiao)" = 400
+
           curl -fs -X POST -H "$H" localhost:8080/api/admin/sorteio
+          # depois do sorteio a ocasião fica travada
+          test "$(curl -s -o /dev/null -w '%{http_code}' -X PUT -H "$H" -H 'Content-Type: application/json' -d '{"ocasiao":"festa"}' localhost:8080/api/admin/ocasiao)" = 409
+          curl -fs localhost:8080/api/evento | jq -e '.ocasiao == "pascoa"'
 
           # nome da comemoração personalizado pelo organizador
           curl -fs -X PUT -H "$H" -H 'Content-Type: application/json' \
