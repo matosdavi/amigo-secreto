@@ -1,5 +1,6 @@
 package com.natal.amigo_secreto.controller;
 
+import com.natal.amigo_secreto.dto.Dtos.NovaOcasiao;
 import com.natal.amigo_secreto.dto.Dtos.NovoNome;
 import com.natal.amigo_secreto.dto.Dtos.NovoParticipante;
 import com.natal.amigo_secreto.dto.Dtos.PainelAdmin;
@@ -32,6 +33,12 @@ public class AdminController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void temaCor(@RequestBody TemaCor tema) {
         service.mudarTemaCor(tema.ativo());
+    }
+
+    @PutMapping("/ocasiao")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void ocasiao(@RequestBody NovaOcasiao nova) {
+        service.mudarOcasiao(nova.ocasiao());
     }
 
     @GetMapping

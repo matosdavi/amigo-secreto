@@ -5,6 +5,7 @@ import com.natal.amigo_secreto.dto.Dtos.PainelAdmin;
 import com.natal.amigo_secreto.dto.Dtos.ParticipanteAdmin;
 import com.natal.amigo_secreto.dto.Dtos.Revelacao;
 import com.natal.amigo_secreto.exception.RegraException;
+import com.natal.amigo_secreto.model.Ocasiao;
 import com.natal.amigo_secreto.model.Participante;
 import com.natal.amigo_secreto.repository.ParticipanteRepository;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,17 @@ public class SorteioService {
                     "O sorteio já foi feito. Para mudar o tema de cor, desfaça o sorteio primeiro.");
         }
         comemoracao.definirTemaCor(ativo);
+    }
+
+    /** Troca a roupa visual (natal, pascoa, trabalho, festa). Só antes do sorteio: todos veem a mesma. */
+    @Transactional
+    public void mudarOcasiao(String texto) {
+        Ocasiao ocasiao = Ocasiao.deTexto(texto);
+        if (repository.existsByAmigoIsNotNull()) {
+            throw RegraException.conflito(
+                    "O sorteio já foi feito. Para mudar a ocasião, desfaça o sorteio primeiro.");
+        }
+        comemoracao.definirOcasiao(ocasiao);
     }
 
     @Transactional

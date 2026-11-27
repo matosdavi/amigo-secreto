@@ -27,6 +27,10 @@ public class Comemoracao {
      */
     private Boolean temaCor;
 
+    /** Roupa visual (ver {@link Ocasiao}). Coluna anulável pelo mesmo motivo; null = Natal. */
+    @Column(length = 20)
+    private String ocasiao;
+
     public String getNome() {
         return nome;
     }
@@ -41,5 +45,13 @@ public class Comemoracao {
 
     public void setTemaCor(boolean temaCor) {
         this.temaCor = temaCor;
+    }
+
+    public Ocasiao getOcasiao() {
+        return ocasiao == null ? Ocasiao.NATAL : Ocasiao.deTexto(ocasiao);
+    }
+
+    public void setOcasiao(Ocasiao ocasiao) {
+        this.ocasiao = ocasiao.valor();
     }
 }

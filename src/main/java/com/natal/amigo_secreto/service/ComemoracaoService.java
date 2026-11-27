@@ -2,6 +2,7 @@ package com.natal.amigo_secreto.service;
 
 import com.natal.amigo_secreto.exception.RegraException;
 import com.natal.amigo_secreto.model.Comemoracao;
+import com.natal.amigo_secreto.model.Ocasiao;
 import com.natal.amigo_secreto.repository.ComemoracaoRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +49,21 @@ public class ComemoracaoService {
     public void definirTemaCor(boolean ativo) {
         Comemoracao comemoracao = carregarOuCriar();
         comemoracao.setTemaCor(ativo);
+        repository.save(comemoracao);
+    }
+
+    /** Roupa visual da revelação. Natal por padrão. */
+    @Transactional(readOnly = true)
+    public Ocasiao ocasiao() {
+        return repository.findById(Comemoracao.ID_UNICO)
+                .map(Comemoracao::getOcasiao)
+                .orElse(Ocasiao.NATAL);
+    }
+
+    @Transactional
+    public void definirOcasiao(Ocasiao ocasiao) {
+        Comemoracao comemoracao = carregarOuCriar();
+        comemoracao.setOcasiao(ocasiao);
         repository.save(comemoracao);
     }
 

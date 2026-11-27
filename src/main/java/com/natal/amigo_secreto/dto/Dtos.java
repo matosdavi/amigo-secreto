@@ -33,13 +33,17 @@ public final class Dtos {
                               List<String> coresDoTema) {
     }
 
-    public record Evento(String nome, boolean temaCor) {
+    /** Configuração pública da comemoração. "ocasiao" vai em minúsculas: natal, pascoa, trabalho, festa. */
+    public record Evento(String nome, boolean temaCor, String ocasiao) {
     }
 
     public record NovoNome(String nome) {
     }
 
     public record TemaCor(boolean ativo) {
+    }
+
+    public record NovaOcasiao(String ocasiao) {
     }
 
     public record Mensagem(String mensagem) {
