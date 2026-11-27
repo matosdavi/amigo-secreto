@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <meta name="referrer" content="no-referrer"/>
     <meta name="robots" content="noindex"/>
-    <meta name="theme-color" content="#1d6b4f"/>
+    <meta name="theme-color" content="#f4f6f8"/>
     <title>Organizador · Amigo Secreto</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/estilo.css"/>
     <script src="/evento.js"></script>
 </head>
@@ -19,6 +19,7 @@
         <span class="evento" id="evento">Amigo Secreto</span>
         <span class="evento-sub oculto" id="evento-sub">🎁 Sorteio de amigo secreto</span>
     </header>
+    <p id="demora" class="demora oculto" role="status"></p>
     <h1 class="centro">Painel do organizador</h1>
 
     <!-- Login -->
@@ -340,7 +341,9 @@
     });
 
     // O painel só é desenhado depois de saber se o tema de cor está ligado.
+    const pararDemora = Evento.avisarDemora($("demora"));
     const eventoPronto = carregarEvento().then((nome) => $("nome-evento").value = nome);
+    eventoPronto.finally(pararDemora);
 
     if (senha) {
         eventoPronto.then(carregar).then(entrarNoPainel).catch(() => {});

@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <meta name="theme-color" content="#b3261e"/>
+    <meta name="theme-color" content="#f4f6f8"/>
     <title>Amigo Secreto 🎁</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/estilo.css"/>
     <script src="/evento.js"></script>
 </head>
@@ -17,6 +17,7 @@
         <span class="evento" id="evento">Amigo Secreto</span>
         <span class="evento-sub oculto" id="evento-sub">🎁 Sorteio de amigo secreto</span>
     </header>
+    <p id="demora" class="demora oculto" role="status"></p>
 
     <section class="cartao centro">
         <h1>🎁 Bem-vindo ao amigo secreto!</h1>
@@ -27,6 +28,9 @@
 
     <a class="link-sutil" href="/organizador">Sou o organizador</a>
 </main>
-<script>Evento.carregar();</script>
+<script>
+    const pararDemora = Evento.avisarDemora(document.getElementById("demora"));
+    Evento.carregar().finally(pararDemora);
+</script>
 </body>
 </html>

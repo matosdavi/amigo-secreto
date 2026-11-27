@@ -9,7 +9,7 @@
     <title>Seu Amigo Secreto 🎁</title>
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:opsz,wght@9..144,700;9..144,900&display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="/estilo.css"/>
     <script src="/evento.js"></script>
 </head>
@@ -21,6 +21,7 @@
     </header>
 
     <div id="carregando" class="carregando" aria-label="Carregando"></div>
+    <p id="demora" class="demora oculto" role="status"></p>
 
     <!-- Link inválido -->
     <section id="tela-erro" class="cartao centro oculto">
@@ -89,15 +90,20 @@
     }
 
     async function iniciar() {
-        Evento.carregar();
+        const pararDemora = Evento.avisarDemora($("demora"));
+        // A roupa (cores e embrulho) é vestida antes de a tela aparecer.
+        const vestido = Evento.carregar().then(Evento.vestir);
 
         try {
             const p = await api("/api/participante/" + encodeURIComponent(token));
+            await vestido;
             document.querySelectorAll(".js-nome").forEach((el) => el.textContent = p.nome);
             mostrar(p.sorteioRealizado ? "tela-presente" : "tela-espera");
         } catch (e) {
             $("erro-texto").textContent = e.message;
             mostrar("tela-erro");
+        } finally {
+            pararDemora();
         }
     }
 
