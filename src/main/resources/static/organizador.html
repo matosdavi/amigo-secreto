@@ -55,6 +55,36 @@
                 WhatsApp sempre deixam claro que é um <strong>amigo secreto</strong>.</p>
         </section>
 
+        <!-- Ocasião: a "roupa" que cada pessoa vê ao abrir o link -->
+        <section class="cartao">
+            <h2>Ocasião</h2>
+            <p class="suave">Muda o embrulho e as cores que cada pessoa vê ao abrir o link.</p>
+            <div class="ocasioes" role="radiogroup" aria-label="Ocasião">
+                <label class="ocasiao" data-ocasiao="natal">
+                    <input type="radio" name="ocasiao" value="natal"/>
+                    <span class="mini mini-natal" aria-hidden="true"></span>
+                    <span>Natal</span>
+                </label>
+                <label class="ocasiao" data-ocasiao="pascoa">
+                    <input type="radio" name="ocasiao" value="pascoa"/>
+                    <span class="mini mini-pascoa" aria-hidden="true"></span>
+                    <span>Páscoa e chocolate</span>
+                </label>
+                <label class="ocasiao" data-ocasiao="trabalho">
+                    <input type="radio" name="ocasiao" value="trabalho"/>
+                    <span class="mini mini-trabalho" aria-hidden="true"></span>
+                    <span>Trabalho</span>
+                </label>
+                <label class="ocasiao" data-ocasiao="festa">
+                    <input type="radio" name="ocasiao" value="festa"/>
+                    <span class="mini mini-festa" aria-hidden="true"></span>
+                    <span>Festa e aniversário</span>
+                </label>
+            </div>
+            <div id="aviso-ocasiao-travada" class="aviso oculto">🔒 O sorteio já foi feito. Para mudar a ocasião,
+                desfaça o sorteio primeiro.</div>
+        </section>
+
         <!-- Tema "Amigo de Uma Cor Só" -->
         <section class="cartao">
             <h2>🎨 Tema “Amigo de Uma Cor Só”</h2>
@@ -165,6 +195,19 @@
         $("aviso-limite-cores").classList.toggle("oculto", !excesso);
     }
 
+    const NOMES_OCASIAO = {natal: "Natal", pascoa: "Páscoa e chocolate", trabalho: "Trabalho", festa: "Festa e aniversário"};
+    const opcoesOcasiao = () => document.querySelectorAll('input[name="ocasiao"]');
+
+    /** Cartão da ocasião: marca a atual e trava depois do sorteio (como o tema de cor). */
+    function desenharOcasiao() {
+        const travada = painelAtual.sorteioRealizado;
+        opcoesOcasiao().forEach((i) => {
+            i.checked = i.value === Evento.ocasiao;
+            i.disabled = travada;
+        });
+        $("aviso-ocasiao-travada").classList.toggle("oculto", !travada);
+    }
+
     function botao(texto, classe, aoClicar) {
         const b = document.createElement("button");
         b.type = "button";
@@ -187,6 +230,7 @@
             ? `Participantes (${viram} de ${participantes.length} já viram)`
             : `Participantes (${participantes.length})`;
         desenharTema();
+        desenharOcasiao();
 
         const lista = $("lista");
         lista.replaceChildren();
@@ -323,8 +367,24 @@
         const nome = await Evento.carregar();
         document.title = "Organizador · " + nome;
         $("tema-cor").checked = Evento.temaCor;
+        desenharOcasiao();
         return nome;
     }
+
+    opcoesOcasiao().forEach((opcao) => opcao.addEventListener("change", () => {
+        const anterior = Evento.ocasiao;
+        const ocasiao = opcao.value;
+        executar(async () => {
+            try {
+                await api("/ocasiao", {method: "PUT", body: JSON.stringify({ocasiao})});
+            } catch (e) {
+                Evento.ocasiao = anterior;
+                desenharOcasiao();
+                throw e;
+            }
+            await carregarEvento();
+        }, `Ocasião salva: ${NOMES_OCASIAO[ocasiao]}.`);
+    }));
 
     $("tema-cor").addEventListener("change", (ev) => {
         const ativo = ev.target.checked;

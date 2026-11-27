@@ -36,7 +36,8 @@
 /* =========================================================
    Roupas por ocasião (só a revelação chama Evento.vestir())
    ========================================================= */
-body[data-ocasiao="natal"] {
+body[data-ocasiao="natal"],
+.ocasiao[data-ocasiao="natal"] {
     --fundo-tinta: #fbf1ee;
     --destaque: #b3261e;
     --destaque-2: #e0a526;
@@ -47,7 +48,8 @@ body[data-ocasiao="natal"] {
     --confete-3: #e0a526;
     --confete-4: #e8736b;
 }
-body[data-ocasiao="pascoa"] {
+body[data-ocasiao="pascoa"],
+.ocasiao[data-ocasiao="pascoa"] {
     --fundo-tinta: #fbeef2;
     --destaque: #6b3e26;
     --destaque-2: #f2a7b9;
@@ -58,7 +60,8 @@ body[data-ocasiao="pascoa"] {
     --confete-3: #f9e3a1;
     --confete-4: #a8714f;
 }
-body[data-ocasiao="trabalho"] {
+body[data-ocasiao="trabalho"],
+.ocasiao[data-ocasiao="trabalho"] {
     --fundo-tinta: #edf1fd;
     --destaque: #2f5bea;
     --destaque-2: #ffb547;
@@ -69,7 +72,8 @@ body[data-ocasiao="trabalho"] {
     --confete-3: #9db4f7;
     --confete-4: #22223b;
 }
-body[data-ocasiao="festa"] {
+body[data-ocasiao="festa"],
+.ocasiao[data-ocasiao="festa"] {
     --fundo-tinta: #f3edfd;
     --destaque: #8e44ec;
     --destaque-2: #ffd23f;
@@ -481,6 +485,74 @@ body[data-ocasiao="festa"] .embrulho-festa { display: block; }
     color: var(--suave);
 }
 .selo.ok { background: var(--ok-claro); color: var(--ok); }
+
+/* ---------- Painel: escolha da ocasião ---------- */
+.ocasioes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ocasiao {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 104px;
+    padding: 12px 8px;
+    border: 2px solid var(--linha);
+    border-radius: 16px;
+    background: #fff;
+    color: var(--tinta);
+    font-weight: 700;
+    font-size: .85rem;
+    line-height: 1.2;
+    text-align: center;
+    cursor: pointer;
+}
+.ocasiao input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+.ocasiao:has(input:checked) {
+    border-color: var(--destaque);
+    box-shadow: inset 0 0 0 1px var(--destaque);
+    background: var(--fundo-tinta);
+}
+.ocasiao:has(input:focus-visible) { outline: 4px solid var(--foco); outline-offset: 3px; }
+.ocasiao:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+
+/* Miniaturas dos embrulhos (usam as cores da própria opção) */
+.mini { position: relative; display: block; width: 48px; height: 44px; flex-shrink: 0; }
+.mini::before, .mini::after { content: ""; position: absolute; }
+.mini-natal::before, .mini-festa::before {
+    left: 6px; right: 6px; bottom: 0; height: 28px;
+    border-radius: 0 0 6px 6px;
+    background: linear-gradient(90deg, transparent 15px, var(--destaque-2) 15px, var(--destaque-2) 21px, transparent 21px), var(--destaque);
+}
+.mini-festa::before {
+    background:
+        linear-gradient(90deg, transparent 15px, var(--destaque-2) 15px, var(--destaque-2) 21px, transparent 21px),
+        radial-gradient(#ff5c8a 24%, transparent 27%) 0 0 / 10px 10px,
+        radial-gradient(#23c9a9 24%, transparent 27%) 5px 5px / 10px 10px,
+        var(--destaque);
+}
+.mini-natal::after, .mini-festa::after {
+    left: 2px; right: 2px; top: 8px; height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, transparent 19px, var(--destaque-2) 19px, var(--destaque-2) 25px, transparent 25px), var(--destaque);
+    box-shadow: 0 2px 0 rgba(0, 0, 0, .2);
+}
+.mini-pascoa::before {
+    left: 10px; top: 2px; width: 28px; height: 40px;
+    border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
+    background: var(--destaque);
+}
+.mini-pascoa::after { left: 10px; top: 20px; width: 28px; height: 6px; background: var(--destaque-2); }
+.mini-trabalho::before {
+    left: 2px; right: 2px; top: 8px; height: 30px;
+    border-radius: 4px;
+    background: var(--destaque);
+}
+.mini-trabalho::after {
+    left: 2px; right: 2px; top: 8px; height: 17px;
+    background: rgba(0, 0, 0, .2);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
 
 /* ---------- Tema "Amigo de Uma Cor Só" ---------- */
 .interruptor {
