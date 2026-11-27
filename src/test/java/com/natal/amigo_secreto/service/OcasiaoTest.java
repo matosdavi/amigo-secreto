@@ -32,6 +32,9 @@ class OcasiaoTest {
     @Autowired
     ParticipanteRepository participantes;
 
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
     @BeforeEach
     void limpar() {
         service.desfazerSorteio();
@@ -51,6 +54,14 @@ class OcasiaoTest {
     void linhaAntigaComOcasiaoNulaViraNatal() {
         comemoracoes.deleteAll();
         comemoracoes.save(new Comemoracao());
+        assertEquals(Ocasiao.NATAL, comemoracao.ocasiao());
+    }
+
+    @Test
+    void ocasiaoDesconhecidaGravadaNoBancoViraNatal() {
+        comemoracoes.deleteAll();
+        comemoracoes.save(new Comemoracao());
+        jdbc.update("update comemoracao set ocasiao = 'carnaval'");
         assertEquals(Ocasiao.NATAL, comemoracao.ocasiao());
     }
 

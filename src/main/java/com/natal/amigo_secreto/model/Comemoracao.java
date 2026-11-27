@@ -48,7 +48,14 @@ public class Comemoracao {
     }
 
     public Ocasiao getOcasiao() {
-        return ocasiao == null ? Ocasiao.NATAL : Ocasiao.deTexto(ocasiao);
+        // Leitura tolerante: valor vazio ou desconhecido no banco não pode derrubar
+        // a página; vira Natal. (A entrada pela API continua estrita, em deTexto.)
+        for (Ocasiao o : Ocasiao.values()) {
+            if (o.valor().equals(ocasiao)) {
+                return o;
+            }
+        }
+        return Ocasiao.NATAL;
     }
 
     public void setOcasiao(Ocasiao ocasiao) {

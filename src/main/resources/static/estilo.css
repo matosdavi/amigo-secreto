@@ -515,6 +515,10 @@ body[data-ocasiao="festa"] .embrulho-festa { display: block; }
 }
 .ocasiao:has(input:focus-visible) { outline: 4px solid var(--foco); outline-offset: 3px; }
 .ocasiao:has(input:disabled) { opacity: .6; cursor: not-allowed; }
+/* Reserva para navegadores sem :has() (celulares mais antigos): marca a miniatura */
+.ocasiao input:checked + .mini { outline: 3px solid var(--destaque); outline-offset: 5px; border-radius: 6px; }
+.ocasiao input:focus-visible + .mini { outline: 4px solid var(--foco); outline-offset: 5px; border-radius: 6px; }
+.ocasiao input:disabled + .mini { opacity: .6; }
 
 /* Miniaturas dos embrulhos (usam as cores da própria opção) */
 .mini { position: relative; display: block; width: 48px; height: 44px; flex-shrink: 0; }

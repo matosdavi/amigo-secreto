@@ -59,7 +59,9 @@ const Evento = {
             if (resposta.ok) {
                 const dados = await resposta.json();
                 Evento.temaCor = dados.temaCor === true;
-                Evento.ocasiao = dados.ocasiao || "natal";
+                // Só as ocasiões que o CSS conhece; qualquer outra deixaria o presente invisível.
+                Evento.ocasiao = ["natal", "pascoa", "trabalho", "festa"].includes(dados.ocasiao)
+                    ? dados.ocasiao : "natal";
                 Evento.mostrar(dados.nome);
             }
         } catch { /* mantém o nome padrão */ }
